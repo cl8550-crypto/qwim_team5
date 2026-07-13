@@ -4,14 +4,35 @@ This folder is the single shared dashboard app for the team's QWIM project.
 Every team member's individual model plugs into this same tree as its own
 subfolder — there is one dashboard, with one tab per model.
 
-**Status:** the full framework provided by the advisor
-(`Viz-QWIM.zip` at the repo root — `main_App.py`, the pre-built models like
-`portfolio_optimization/`, `discounting/`, etc., and `clients_QWIM/`) has not
-been unzipped into this folder yet. Only individual model scaffolding has
-been added so far (see `goal_parity/` below). Do not unzip it into this
-folder yourself — this is pending advisor clarification (see email draft) to
-avoid multiple teammates each unzipping it independently and creating
-merge conflicts.
+**Status:** the full framework from the advisor (`main_App.py`, the
+pre-built models like `portfolio_optimization/`, `discounting/`, etc.,
+`clients_QWIM/`, `inputs/`, etc.) has been unpacked and merged into `main`.
+This folder is now the complete, working dashboard app — pull the latest
+`main` and you have everything you need to get started.
+
+**Known gap:** two file types were intentionally left out of that merge and
+still need to be added separately:
+- `src/dashboard/reporting/*.typ` — Typst templates the **Reporting** subtab
+  needs to generate PDFs
+- `tests/regression_data/**/*.parquet` and `tests/_baselines/` — fixture
+  data some regression tests compare against
+
+If the Reporting subtab or `pytest tests -n auto -q` fails for you, this is
+the likely reason — it's not something broken in your own setup. Flag it in
+the next advisor meeting rather than debugging around it.
+
+## Getting set up locally
+
+```bash
+mkdir -p ~/Desktop/Git_Repos && cd ~/Desktop/Git_Repos
+git clone https://github.com/cl8550-crypto/qwim_team5.git
+cd qwim_team5/Viz-QWIM
+pip install -U pip uv ruff
+uv add polars          # bootstraps .venv/ from pyproject.toml
+source .venv/bin/activate
+pytest tests -n auto -q
+shiny run --launch-browser src/dashboard/main_App.py
+```
 
 ## Where your files go
 
@@ -58,6 +79,10 @@ teammate's.
 ## Workflow
 
 Follow the advisor's guideline: work on your own feature branch (named after
-your model, e.g. `<your-model-name>-model`), open a pull request into `main`
-when your tab runs and `pytest tests -n auto -q` passes, and merge via
-squash-and-merge to keep `main`'s history to one entry per model.
+your model, e.g. `<your-model-name>-model`), created off the latest `main`
+(not an older commit — `main` now has the full framework). Open a pull
+request when your tab runs and `pytest tests -n auto -q` passes, and merge
+via squash-and-merge to keep `main`'s history to one entry per model.
+
+Regularly rebase your branch on the latest `main` and rerun the tests after,
+so you catch conflicts early rather than at the end.
