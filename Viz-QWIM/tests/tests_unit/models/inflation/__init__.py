@@ -1,0 +1,6 @@
+"""
+Inflation models Module
+============
+
+This module contains implementations of inflations models.
+"""

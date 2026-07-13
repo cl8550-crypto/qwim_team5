@@ -1,0 +1,136 @@
+site_name: Viz-QWIM Documentation
+site_description: Quantitative Wealth and Investment Management Dashboard
+site_url: https://example.com/viz-qwim/
+docs_dir: docs
+theme:
+  name: material
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_api_reference.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]        # ensure workspace root is always in Python path
+          options:
+            docstring_style: numpy
+            allow_inspection: true
+            force_inspection: false
+            show_source: true
+            show_root_heading: true
+            show_if_no_docstring: true
+            show_signature_annotations: true
+            separate_signature: false
+  - autorefs
+  - coverage:
+      page_path: coverage
+      html_report_dir: htmlcov
+
+# Fail --strict on link or nav drift
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    absolute_links: warn
+    unrecognized_links: warn
+
+nav:
+  - Home: index.md
+  - Docs Notes: README_docs.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Overview: user-guide/overview.md
+    - Setup Tab: user-guide/tab-setup.md
+    - Overview Tab: user-guide/tab-overview.md
+    - Clients Tab: user-guide/tab-clients.md
+    - Portfolios Tab: user-guide/tab-portfolios.md
+    - Products Tab: user-guide/tab-products.md
+    - Results Tab: user-guide/tab-results.md
+    - Risks Tab: user-guide/tab-risks.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Standards: development/standards.md
+    - Testing: development/testing.md
+    - Changelog (Cinci): development/CHANGELOG-cinci.md
+  - Deployment:
+    - Local: deployment/local.md
+    - Docker: deployment/docker.md
+    - Production: deployment/production.md
+  - Dashboard:
+    - Overview: modules/dashboard_overview.md
+    - Shiny Utils:
+      - utils_visuals: modules/utils_visuals.md
+      - utils_enhanced_validation: modules/utils_enhanced_validation.md
+      - utils_enhanced_formatting: modules/utils_enhanced_formatting.md
+      - utils_tab_data_analysis: modules/utils_tab_data_analysis.md
+      - utils_tab_inputs: modules/utils_tab_inputs.md
+      - utils_tab_results: modules/utils_tab_results.md
+      - utils_tab_portfolios: modules/utils_tab_portfolios.md
+      - utils_tab_clients: modules/utils_tab_clients.md
+      - utils_reporting: modules/utils_reporting.md
+      - utils_data: modules/utils_data.md
+      - utils_errors_dashboard: modules/utils_errors_dashboard.md
+      - utils_enhanced_ui_components: modules/utils_enhanced_ui_components.md
+    - Reactives:
+      - reactives_validation: modules/reactives_validation.md
+      - reactives_initialization: modules/reactives_initialization.md
+      - reactives_shiny: modules/reactives_shiny.md
+      - reactives_sync: modules/reactives_sync.md
+      - reactives_access: modules/reactives_access.md
+    - Tabs:
+      - tab_setup: modules/tab_setup.md
+      - tab_overview: modules/tab_overview.md
+      - tab_clients: modules/tab_clients.md
+      - tab_portfolios: modules/tab_portfolios.md
+      - tab_products: modules/tab_products.md
+      - tab_results: modules/tab_results.md
+      - tab_risks: modules/tab_risks.md
+    - Subtabs:
+      - subtab_advisor_info: modules/subtab_advisor_info.md
+      - subtab_computation: modules/subtab_computation.md
+      - subtab_personal_info: modules/subtab_personal_info.md
+      - subtab_assets: modules/subtab_assets.md
+      - subtab_income: modules/subtab_income.md
+      - subtab_goals: modules/subtab_goals.md
+      - subtab_summary: modules/subtab_summary.md
+      - subtab_outline: modules/subtab_outline.md
+      - subtab_portfolios_comparison: modules/subtab_portfolios_comparison.md
+      - subtab_portfolios_analysis: modules/subtab_portfolios_analysis.md
+      - subtab_portfolios_skfolio: modules/subtab_portfolios_skfolio.md
+      - subtab_weights_analysis: modules/subtab_weights_analysis.md
+      - subtab_annuities: modules/subtab_annuities.md
+      - subtab_insurance_life: modules/subtab_insurance_life.md
+      - subtab_insurance_LTC: modules/subtab_insurance_LTC.md
+      - subtab_reporting: modules/subtab_reporting.md
+      - subtab_simulation: modules/subtab_simulation.md
+    - Reporting:
+      - report_QWIM: modules/report_QWIM.md
+      - report_data_export: modules/report_data_export.md
+  - Clients:
+    - client_QWIM: modules/client_QWIM.md
+    - utils_client: modules/utils_client.md
+  - Utils:
+    - api_reference_generation: modules/api_reference_generation.md
+    - import_helpers: modules/import_helpers.md
+    - remove_pycache: modules/remove_pycache.md
+    - lint_format: modules/lint_format.md
+    - logger_custom: modules/logger_custom.md
+    - exception_custom: modules/exception_custom.md
+    - platform_utils: modules/platform_utils.md
+    - traceback_custom: modules/traceback_custom.md
+    - daycount: modules/daycount.md
+  - Models:
+    - Simulation:
+      - simulation_dispatch: modules/simulation_dispatch.md
+  - Tests: README_docs.md
+  - Coverage: coverage.md
+  - API Reference: api/
