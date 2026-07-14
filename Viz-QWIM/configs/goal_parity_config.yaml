@@ -1,0 +1,46 @@
+# Goal Parity model configuration (Roadmap Sec 5 calibration, Sec 7 configs)
+
+investor_defaults:
+  tau_months: 6            # Proposal Step 1 note — project default rebalancing frequency
+  risk_profile: Moderate   # dashboard VALID_RISK_TOLERANCE label
+  theta_balanced:          # Sec 3.5 — Goal Parity Balanced targets
+    Liquidity: 0.25
+    Income: 0.25
+    Preservation: 0.25
+    Growth: 0.25
+
+volatility:
+  kappa: 2.0               # Sec 3.3 tail-scaling constant (25% tail fraction default)
+
+liquidity_option:
+  k1: 0.985                # Sec 3.4 — paper's illustrative one-year liquidity strike
+
+strategic_optimization:    # Sec 3.5 tuning constants
+  c: 0.005                 # goal-share tracking-error penalty (smaller = tighter tracking)
+  kappa_diversification: 10.0
+  w_max: 0.35              # per-asset weight cap
+
+rebalancing:               # Sec 3.6 thresholds
+  eps: 0.02                # max |goal gap| tolerated before trading
+  eta_cost_benefit: 100.0  # min gap-reduction per unit round-trip cost to trade
+  cash_min: 0.02           # cash-floor constraint on rates-class assets
+  turnover_budget: 0.20    # max one-way turnover per rebalance
+  trade_size: 0.01         # greedy step size
+  unit_cost: 0.0005        # 5 bps per side
+
+# Sec 3.1 — categorical risk profile -> eta (literal rows of the paper's
+# Exhibit [Risk Aversion]); keys match dashboard VALID_RISK_TOLERANCE
+risk_profile_to_eta:
+  Aggressive: 1
+  Moderate Aggressive: 8
+  Moderate: 20
+  Moderate Conservative: 50
+  Conservative: 200
+
+# Step 2 RC/RN split — income (return ON capital) fraction per asset class
+income_fraction_by_class:
+  sectors: 0.25
+  bonds: 0.85
+  commodities: 0.0
+  rates: 0.95
+  volatility: 0.0
