@@ -223,6 +223,10 @@ from src.dashboard.shiny_tab_clients.tab_clients import (
     tab_clients_server,
     tab_clients_ui,
 )
+from src.dashboard.shiny_tab_goal_based_investing.tab_goal_based_investing import (
+    tab_goal_based_investing_server,
+    tab_goal_based_investing_ui,
+)
 from src.dashboard.shiny_tab_overview.tab_overview import (
     tab_overview_server,
     tab_overview_ui,
@@ -480,6 +484,14 @@ def create_app_ui() -> Any:
                 data_inputs=data_inputs,
             ),  # Input datasets for clients
         ),
+        ui.nav_panel(
+            "Goal-Based Investing",
+            tab_goal_based_investing_ui(
+                "ID_tab_goal_based_investing",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
         # portfolio analysis tab
         ui.nav_panel(
             "Portfolios",
@@ -679,6 +691,13 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
         data_inputs=data_inputs,  # Input datasets for portfolio analysis
         reactives_shiny=reactives_shiny,
     )  # Centralized reactive state for coordination
+
+    tab_goal_based_investing_server(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
+        id="ID_tab_goal_based_investing",  # pyrefly: ignore[unexpected-keyword,bad-argument-count]
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
 
     # Initialize portfolio analysis module server
     tab_portfolios_server(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
