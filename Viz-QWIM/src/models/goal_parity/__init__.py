@@ -16,7 +16,11 @@ from src.models.goal_parity._goalparity_decomposition import (
     first_passage_probability,
 )
 from src.models.goal_parity._goalparity_asset_map import asset_map_coordinates
-from src.models.goal_parity._goalparity_optimization import OptimizationResult, StrategicOptimizer
+from src.models.goal_parity._goalparity_optimization import (
+    OptimizationResult,
+    StrategicOptimizer,
+    tilted_theta,
+)
 from src.models.goal_parity._goalparity_profiling import InvestorProfile
 from src.models.goal_parity._goalparity_rebalancing import (
     RebalanceResult,
@@ -56,4 +60,5 @@ __all__ = [
     "first_passage_probability",
     "load_default_universe",
     "normalize_risk_profile",
+    "tilted_theta",
 ]

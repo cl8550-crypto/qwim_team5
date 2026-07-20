@@ -50,11 +50,31 @@ class Test_Asset_Universe:
 
 
 class Test_Asset_Map:
+    """Confirmed against Golts & Jones (2023), Appendix B: x=Pi_L, y=Pi_D."""
+
     def test_cash_plots_at_origin(self) -> None:
         shares = GoalDecomposer().decompose(
             "CASH", epv=1.0, sigma_d=0.001, sigma_l=0.001, T=20, tau_years=0.5, b=0.85
         )
         assert asset_map_coordinates(shares) == pytest.approx((0.0, 0.0), abs=0.02)
+
+    def test_axes_match_appendix_b_exactly(self) -> None:
+        """x = Pi_liquidity, y = Pi_default (not a share-weighted combination)."""
+        shares = GoalDecomposer().decompose(
+            "MID", epv=2.0, sigma_d=0.12, sigma_l=0.18, T=15, tau_years=0.5, b=0.80
+        )
+        x, y = asset_map_coordinates(shares)
+        assert x == pytest.approx(shares.pi_liquidity)
+        assert y == pytest.approx(shares.pi_default)
+
+    def test_high_liquitility_low_defaultility_is_preservation_corner(self) -> None:
+        """Pi_L high, Pi_D low -> (x, y) near (1, 0), the Preservation corner."""
+        shares = GoalDecomposer().decompose(
+            "PRES", epv=1.0, sigma_d=0.001, sigma_l=0.5, T=30, tau_years=0.5, b=0.97
+        )
+        x, y = asset_map_coordinates(shares)
+        assert x > 0.9
+        assert y < 0.1
 
     def test_coordinates_bounded(self) -> None:
         shares = GoalDecomposer().decompose(

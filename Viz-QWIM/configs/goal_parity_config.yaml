@@ -10,10 +10,10 @@ investor_defaults:
     Growth: 0.25
 
 volatility:
-  kappa: 2.0               # Sec 3.3 tail-scaling constant (25% tail fraction default)
+  gamma0: 1.6              # Golts & Jones (2023) Appendix A: "we use gamma0 = 1.6 in this article"
 
 liquidity_option:
-  k1: 0.985                # Sec 3.4 — paper's illustrative one-year liquidity strike
+  k1: 0.985                # Appendix A — paper's one-year liquidity strike L1
 
 strategic_optimization:    # Sec 3.5 tuning constants
   c: 0.005                 # goal-share tracking-error penalty (smaller = tighter tracking)
