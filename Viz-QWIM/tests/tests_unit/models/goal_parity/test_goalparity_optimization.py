@@ -1,4 +1,4 @@
-"""Unit tests for StrategicOptimizer (Step 5, Roadmap Sec 3.5).
+"""Unit tests for StrategicOptimizer (Step 5, Golts & Jones 2023 p.10-12).
 
 Uses a small synthetic universe with archetypal goal profiles so results are
 deterministic and independent of market data.
@@ -9,8 +9,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from src.models.goal_parity import StrategicOptimizer
-from src.models.goal_parity.utils_goal_parity import GOALS
+from src.models.goal_parity import StrategicOptimizer, tilted_theta
+from src.models.goal_parity.utils_goal_parity import GOALS, THETA_BALANCED
 
 
 TICKERS = ["CASH", "BOND", "TIPS", "EQTY"]
@@ -45,6 +45,32 @@ class Test_Balanced:
         assert (result.weights <= 0.30 + 1e-8).all()
 
 
+class Test_Tilted_Theta:
+    """Golts & Jones (2023) p.12: the tilt is a goal-target vector, not a
+    separate constrained objective."""
+
+    def test_maximal_tilt_is_100_0_0_0(self) -> None:
+        theta = tilted_theta("Growth", tilt_strength=1.0)
+        assert theta == {"Liquidity": 0.0, "Income": 0.0, "Preservation": 0.0, "Growth": 1.0}
+
+    def test_zero_strength_recovers_balanced(self) -> None:
+        assert tilted_theta("Growth", tilt_strength=0.0) == THETA_BALANCED
+
+    def test_moderate_tilt_is_between_balanced_and_maximal(self) -> None:
+        """p.12: "a more moderate tilt (such as 50% growth) ... in between"."""
+        theta = tilted_theta("Growth", tilt_strength=0.5)
+        assert 0.25 < theta["Growth"] < 1.0
+        assert 0.0 < theta["Liquidity"] < 0.25
+
+    def test_rejects_unknown_goal(self) -> None:
+        with pytest.raises(ValueError):
+            tilted_theta("Revenue")
+
+    def test_rejects_out_of_range_strength(self) -> None:
+        with pytest.raises(ValueError):
+            tilted_theta("Growth", tilt_strength=1.5)
+
+
 class Test_Tilted:
     def test_tilt_raises_target_goal_power(self) -> None:
         optimizer = StrategicOptimizer()
@@ -53,20 +79,25 @@ class Test_Tilted:
         assert tilted.success
         assert tilted.goal_powers["Growth"] > balanced.goal_powers["Growth"]
 
-    def test_floors_hold_for_other_goals(self) -> None:
-        result = StrategicOptimizer().solve_tilted(
-            TICKERS, EXP_RETURNS, SHARES, "Growth",
-            floors={"Liquidity": 0.10, "Income": 0.10, "Preservation": 0.05},
+    def test_maximal_tilt_uses_100_percent_target(self) -> None:
+        """Solving with the maximal tilt is equivalent to solve_balanced(theta=maximal)."""
+        optimizer = StrategicOptimizer()
+        via_tilted = optimizer.solve_tilted(TICKERS, EXP_RETURNS, SHARES, "Income")
+        via_balanced = optimizer.solve_balanced(
+            TICKERS, EXP_RETURNS, SHARES, theta=tilted_theta("Income", 1.0)
         )
-        assert result.success
-        assert result.goal_powers["Liquidity"] >= 0.10 - 1e-6
-        assert result.goal_powers["Income"] >= 0.10 - 1e-6
+        assert via_tilted.weights == pytest.approx(via_balanced.weights)
 
-    def test_infeasible_floor_capped_to_capacity(self) -> None:
-        """A floor above the goal's achievable capacity must not break the solve."""
-        result = StrategicOptimizer().solve_tilted(
-            TICKERS, EXP_RETURNS, SHARES, "Growth", floors={"Preservation": 0.90}
-        )
+    def test_partial_tilt_lands_between_balanced_and_maximal(self) -> None:
+        optimizer = StrategicOptimizer()
+        balanced = optimizer.solve_balanced(TICKERS, EXP_RETURNS, SHARES)
+        half = optimizer.solve_tilted(TICKERS, EXP_RETURNS, SHARES, "Growth", tilt_strength=0.5)
+        full = optimizer.solve_tilted(TICKERS, EXP_RETURNS, SHARES, "Growth", tilt_strength=1.0)
+        assert balanced.goal_powers["Growth"] <= half.goal_powers["Growth"] <= full.goal_powers["Growth"] + 1e-9
+
+    def test_always_feasible_even_for_scarce_goal(self) -> None:
+        """A soft quadratic penalty (not hard floors) can never be infeasible."""
+        result = StrategicOptimizer().solve_tilted(TICKERS, EXP_RETURNS, SHARES, "Preservation")
         assert result.success
 
     def test_rejects_unknown_goal(self) -> None:

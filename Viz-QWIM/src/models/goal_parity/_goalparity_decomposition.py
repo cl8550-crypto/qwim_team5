@@ -1,22 +1,27 @@
 """GoalDecomposer: Step 4 — option-based 4x4 EPV split (Roadmap Sec 3.4).
 
-Both option "prices" are implemented as first-passage (barrier-hit)
-probabilities of a driftless geometric Brownian motion, which lie in [0, 1]
-and act as the paper's two independent triggers:
+Confirmed against Golts & Jones (2023), Appendix A-B. Both option "prices"
+are first-passage (barrier-hit) probabilities of a driftless geometric
+Brownian motion, lying in [0, 1], acting as the paper's two independent
+triggers:
 
-    pi_default(T, sigma_D, b)      — probability of breaching the investor's
-                                     "substantial loss" barrier b within T
-                                     (Golts & Kritzman 2010, formula 3)
-    pi_liquidity(tau, T, sigma_L)  — horizon-driven liquidity preference
-                                     (Roadmap Sec 3.4 / Appendix B variant):
-                                     first-passage against the compounding
-                                     strike k = k1^T, so short-horizon
-                                     investors demand near-full liquidity and
-                                     long-horizon investors tolerate locking
-                                     up roughly half the portfolio
-                                     (Golts & Kritzman 2010, formula 5)
+    pi_default(T, sigma_D, b)  — the "default option": probability of
+                                 breaching the investor's "substantial loss"
+                                 barrier b within T (Appendix A; Golts &
+                                 Kritzman 2010, formula 3)
+    pi_liquidity(T, sigma_L)   — the horizon-driven "liquidity option":
+                                 first-passage against the compounding strike
+                                 L = L1^T with L1 = 0.985 (Appendix A). Confirmed
+                                 to NOT depend on the tactical rebalancing
+                                 frequency tau (Appendix A, footnote 10) --
+                                 tau instead governs Step 6 rebalancing only.
+                                 Short-horizon investors demand near-full
+                                 liquidity (L~0.985 at T=1); long-horizon
+                                 investors tolerate locking up roughly half
+                                 the portfolio (L~0.55 at T=40).
 
-The 2x2 truth-table split (the literal origin of the "4x4" name):
+The 2x2 truth-table split (Appendix B, the literal origin of the "4x4"/"GIPL"
+name; epv_g/epv_i/epv_p/epv_l in the paper's notation):
     EPV_G = pi_d *    pi_l  * EPV      EPV_I = pi_d * (1-pi_l) * EPV
     EPV_P = (1-pi_d)* pi_l  * EPV      EPV_L = (1-pi_d)*(1-pi_l)* EPV
 which sums back to EPV by construction.
@@ -83,14 +88,15 @@ class GoalDecomposer:
         return first_passage_probability(T, sigma_d, b)
 
     def pi_liquidity(self, tau_years: float, T: float, sigma_l: float) -> float:
-        """Horizon-driven liquidity option (Roadmap Sec 3.4 Appendix B variant).
+        """Horizon-driven liquidity option (Golts & Jones 2023, Appendix A).
 
-        The one-year strike k1 compounds to k = k1^T over the horizon
-        (k ~ 0.985 at T=1 down to ~0.55 at T=40), and the option is priced as
+        The one-year strike k1=L1 compounds to L = L1^T over the horizon
+        (L ~ 0.985 at T=1 down to ~0.55 at T=40), and the option is priced as
         the first-passage probability of that strike under sigma_L. tau is
-        retained in the signature for the cliquet variant (a) but does not
-        enter this pricing (the tau -> 0 limit the Roadmap records); tau
-        drives Step 6 rebalancing frequency instead.
+        retained in the signature for interface stability, but the paper
+        confirms (Appendix A, footnote 10) this first-passage liquidity
+        option has no dependence on the tactical rebalancing frequency tau;
+        tau drives Step 6 rebalancing frequency instead.
         """
         del tau_years
         if T <= 0.0 or sigma_l <= 0.0:
