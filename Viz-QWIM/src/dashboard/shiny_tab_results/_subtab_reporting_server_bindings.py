@@ -232,6 +232,10 @@ def register_subtab_reporting_server_bindings_impl_QWIM(
                 "input_ID_tab_results_subtab_reporting_checkbox_include_simulation",
                 True,
             ),
+            "Input_Tab_Results_Subtab_Reporting_Include_Goal_Parity": (
+                "input_ID_tab_results_subtab_reporting_checkbox_include_goal_parity",
+                True,
+            ),
         }
         for reactive_key, (input_id, default_value) in flag_map.items():
             try:
@@ -325,6 +329,9 @@ def register_subtab_reporting_server_bindings_impl_QWIM(
             include_simulation = coerce_reporting_flag_or_default(raw_value=input.input_ID_tab_results_subtab_reporting_checkbox_include_simulation(),
                 default_value=True,
             )
+            include_goal_parity = coerce_reporting_flag_or_default(raw_value=input.input_ID_tab_results_subtab_reporting_checkbox_include_goal_parity(),
+                default_value=True,
+            )
             include_charts = any(
                 [
                     include_portfolio_analysis,
@@ -333,6 +340,7 @@ def register_subtab_reporting_server_bindings_impl_QWIM(
                     include_skfolio_optimization,
                     include_optimalportfolios_optimization,
                     include_simulation,
+                    include_goal_parity,
                 ],
             )
             chart_resolution = (
@@ -386,6 +394,7 @@ def register_subtab_reporting_server_bindings_impl_QWIM(
                     "include_skfolio_optimization": include_skfolio_optimization,
                     "include_optimalportfolios_optimization": include_optimalportfolios_optimization,
                     "include_simulation": include_simulation,
+                    "include_goal_parity": include_goal_parity,
                 }
                 export_report_config(reactives_shiny = reactives_shiny, section_flags = section_flags, report_title = report_title)
                 logger.debug("Exported report_config.json with section flags")

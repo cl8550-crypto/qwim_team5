@@ -55,6 +55,9 @@
 #let in_sim  = results.at("Portfolio_Simulation_Inputs",           default: (:))
 #let out_sim = results.at("Portfolio_Simulation_Outputs",          default: (:))
 
+#let in_gp  = results.at("Goal_Parity_Inputs",                     default: (:))
+#let out_gp = results.at("Goal_Parity_Outputs",                    default: (:))
+
 // ---- Defensive helpers ----------------------------------------------------
 // safe_merge: merge *actual* (from JSON) into *defaults* — avoids the
 // "cannot spread dictionary into array" error that (..) spreads can trigger.
@@ -114,6 +117,33 @@
   )
   if type(out_sim) == dictionary { out_sim + (summary_statistics: guarded_ss) }
   else { (summary_statistics: guarded_ss) }
+}
+
+// Guard out_gp.goal_powers / rebalancing
+#let _default_goal_powers = (Liquidity: 0.25, Income: 0.25, Preservation: 0.25, Growth: 0.25)
+#let _default_rebalancing = (traded: false, num_trades: 0, turnover: 0.0,
+  goal_powers_before: _default_goal_powers, goal_powers_after: _default_goal_powers)
+#let out_gp = {
+  let _gpow = if type(out_gp) == dictionary { out_gp.at("goal_powers", default: (:)) } else { (:) }
+  let _gpow = if type(_gpow) == dictionary { _gpow } else { (:) }
+  let _reb  = if type(out_gp) == dictionary { out_gp.at("rebalancing", default: (:)) } else { (:) }
+  let _reb  = if type(_reb) == dictionary { _reb } else { (:) }
+  let guarded_goal_powers = safe_merge(_default_goal_powers, _gpow)
+  let guarded_rebalancing = (
+    traded: _reb.at("traded", default: false),
+    num_trades: _reb.at("num_trades", default: 0),
+    turnover: _reb.at("turnover", default: 0.0),
+    goal_powers_before: safe_merge(_default_goal_powers, _reb.at("goal_powers_before", default: (:))),
+    goal_powers_after: safe_merge(_default_goal_powers, _reb.at("goal_powers_after", default: (:))),
+  )
+  let base = if type(out_gp) == dictionary { out_gp } else { (:) }
+  base + (
+    mode: base.at("mode", default: "balanced"),
+    expected_return: base.at("expected_return", default: 0.0),
+    goal_powers: guarded_goal_powers,
+    top_weights: safe_array(base.at("top_weights", default: ())),
+    rebalancing: guarded_rebalancing,
+  )
 }
 
 // Guard out_sk.performance_summary
@@ -1277,6 +1307,107 @@ The simulation runs #field(out_sim.summary_statistics, "num_scenarios") scenario
   advice.*
 ]
 ] // end include_simulation
+
+#pagebreak()
+
+#if config.at("include_goal_parity", default: true) [
+= Goal Parity Model
+
+#section_rule()
+
+The Goal Parity model (Cron & Golts 2022; Golts & Jones 2023) decomposes every
+asset into four universal goals -- *Liquidity*, *Income*, *Preservation*, and
+*Growth* -- weighted by the investor's own strategic horizon and loss
+tolerance, then constructs a portfolio that "powers" those goals in
+proportion to the investor's preferences.
+
+// ---------------------------------------------------------------------------
+== Investor Profile
+
+#styled_table(
+  columns: (auto, 1fr),
+  table.header(
+    text(fill: white, weight: "bold")[Parameter],
+    text(fill: white, weight: "bold")[Value],
+  ),
+  [Strategic Horizon],       [#field(in_gp, "strategic_horizon_years") years],
+  [Rebalancing Frequency],   [Every #field(in_gp, "rebalancing_frequency_months") months],
+  [Risk Profile],            [#field(in_gp, "risk_profile")],
+  [Risk Aversion (η)],       [#field(in_gp, "risk_aversion_eta")],
+  [Loss Barrier b(η)],       [#fmt_pct(in_gp.at("loss_barrier_b", default: 0.0))],
+  [Loss Tolerance (1 − b)],  [#fmt_pct(in_gp.at("loss_tolerance", default: 0.0))],
+)
+
+// ---------------------------------------------------------------------------
+== Strategic Portfolio (Goal Parity Balanced)
+
+#grid(
+  columns: (1fr, 1fr, 1fr, 1fr),
+  gutter: 0.8em,
+  kpi_card("Liquidity", fmt_pct(out_gp.goal_powers.Liquidity), sub: "Target 25%"),
+  kpi_card("Income", fmt_pct(out_gp.goal_powers.Income), sub: "Target 25%",
+    accent: rgb("#0f766e")),
+  kpi_card("Preservation", fmt_pct(out_gp.goal_powers.Preservation), sub: "Target 25%"),
+  kpi_card("Growth", fmt_pct(out_gp.goal_powers.Growth), sub: "Target 25%",
+    accent: rgb("#b91c1c")),
+)
+
+#v(0.8em)
+
+*Expected portfolio return:* #fmt_pct(out_gp.at("expected_return", default: 0.0)) per year.
+
+#figure(
+  image("outputs_images/chart_goal_parity_goal_powers.svg", width: 90%),
+  caption: [Goal Parity -- Achieved Goal Powers vs. Balanced Target (25% each)],
+)
+
+#if out_gp.top_weights.len() > 0 [
+#styled_table(
+  columns: (1fr, 1fr),
+  table.header(
+    text(fill: white, weight: "bold")[Asset],
+    text(fill: white, weight: "bold")[Weight],
+  ),
+  ..out_gp.top_weights.map(row => (
+    [#row.at("ticker", default: "N/A")],
+    [#fmt_pct(row.at("weight", default: 0.0))],
+  )).flatten()
+)
+
+#figure(
+  image("outputs_images/chart_goal_parity_weights.svg", width: 90%),
+  caption: [Goal Parity -- Strategic Portfolio Weights],
+)
+] else [
+#note_box[No portfolio weights available.]
+]
+
+// ---------------------------------------------------------------------------
+== Tactical Rebalancing
+
+#if out_gp.rebalancing.traded [
+#note_box[
+  *Rebalanced:* #field(out_gp.rebalancing, "num_trades") trades executed,
+  #fmt_pct(out_gp.rebalancing.at("turnover", default: 0.0)) one-way turnover,
+  re-aligning the portfolio's goal powers toward the strategic target.
+]
+] else [
+#note_box[
+  *No rebalancing needed:* goal-power drift is within the cost-benefit
+  threshold, so no trades were executed.
+]
+]
+
+#note_box[
+  *Methodology:* strategic weights solve
+  max_w a·w − (1/2c)·Σ_k(P_k(w) − θ_k)² − (1/2κ)·w·w subject to Σw = 1,
+  where P_k(w) is the portfolio's power for goal k and θ_k is the target
+  allocation (25% each for Goal Parity Balanced). Tactical rebalancing uses a
+  signal-priority heuristic (Arnott, Li & Linnainmaa 2024), executing only
+  trades whose goal-realignment benefit clears their transaction cost.
+  *Results are illustrative and do not constitute investment advice.*
+]
+] // end include_goal_parity
 
 #pagebreak()
 
