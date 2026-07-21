@@ -17,6 +17,7 @@ from shinywidgets import output_widget, render_widget
 
 from src.dashboard.shiny_tab_goal_parity._tab_goal_parity_pipeline import (
     available_assets,
+    calibrated_volatility_adjuster,
     decompose_universe,
 )
 from src.models.goal_parity.utils_goal_parity import GOALS
@@ -41,6 +42,7 @@ def subtab_goal_parity_asset_map_ui(
             "liquidity strike k₁^T under σ_L). Growth = both trigger; "
             "Liquidity = neither."
         ),
+        ui.output_text("output_calibration_note"),
         ui.layout_sidebar(
             ui.sidebar(
                 ui.input_checkbox_group(
@@ -79,6 +81,15 @@ def subtab_goal_parity_asset_map_server(  # pragma: no cover
     def pipeline():
         return decompose_universe(profile(), selected_tickers())
 
+    @render.text
+    def output_calibration_note() -> str:
+        gamma0 = calibrated_volatility_adjuster().gamma0
+        return (
+            f"Skew-sensitivity constant gamma0 = {gamma0:.2f}, calibrated from this "
+            "universe's own daily-return history (Appendix A), vs. the paper's own "
+            "monthly-data default of 1.6."
+        )
+
     @render_widget
     def output_asset_map_plot():
         frame = pd.DataFrame(pipeline().rows)
@@ -90,8 +101,8 @@ def subtab_goal_parity_asset_map_server(  # pragma: no cover
             color="Class",
             hover_data={goal: ":.2f" for goal in GOALS},
             labels={
-                "map_x": "Default-exposed share (Income + Growth)",
-                "map_y": "Illiquid / long-horizon share (Preservation + Growth)",
+                "map_x": "Liquitility (pi_liquidity)",
+                "map_y": "Defaultility (pi_default)",
             },
             title="Asset map — corners: Liquidity (0,0), Income (1,0), Preservation (0,1), Growth (1,1)",
             range_x=[-0.05, 1.05],

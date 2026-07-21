@@ -8,8 +8,10 @@ Negatively skewed assets get sigma_D adjusted up and sigma_L down; positively
 skewed assets the opposite. gamma0 = gamma_tail * rho^3 is a fitted constant
 related to the fat-tailed nature of returns; the paper uses gamma0 = 1.6
 throughout (rho^2 >= ~25% tail-variance fraction is typical for fat-tailed
-financial returns). CalibrationSuite.fit_kappa offers a data-driven alternative
-to this fixed constant.
+financial returns). CalibrationSuite.fit_gamma0_for_universe offers a
+data-driven alternative to this fixed constant, fitted from the selected
+asset universe's own return history -- this is what the dashboard pipeline
+now uses (see _tab_goal_parity_pipeline.calibrated_volatility_adjuster).
 """
 
 from __future__ import annotations
