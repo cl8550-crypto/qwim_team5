@@ -10,7 +10,12 @@ investor_defaults:
     Growth: 0.25
 
 volatility:
-  gamma0: 1.6              # Golts & Jones (2023) Appendix A: "we use gamma0 = 1.6 in this article"
+  gamma0: 1.6              # Fallback/VolatilityAdjuster() default only. The live dashboard
+                           # pipeline (_tab_goal_parity_pipeline.calibrated_volatility_adjuster)
+                           # instead fits gamma0 from this universe's own pooled daily returns
+                           # (CalibrationSuite.fit_gamma0_for_universe, Appendix A) -- currently
+                           # ~1.07, noticeably below the paper's own monthly-data default of 1.6,
+                           # since daily returns are more fat-tailed than monthly ones.
 
 liquidity_option:
   k1: 0.985                # Appendix A — paper's one-year liquidity strike L1

@@ -7,11 +7,14 @@ per process from the repo-level cleaned_data folder (see the model data layer).
 
 from __future__ import annotations
 
+import functools
+
 from dataclasses import dataclass
 
 import numpy as np
 
 from src.models.goal_parity import (
+    CalibrationSuite,
     CashFlowEstimator,
     GoalDecomposer,
     InvestorProfile,
@@ -24,6 +27,20 @@ from src.models.goal_parity import (
     load_default_universe,
 )
 from src.models.goal_parity.utils_goal_parity import GOALS
+
+
+@functools.lru_cache(maxsize=1)
+def calibrated_volatility_adjuster() -> VolatilityAdjuster:
+    """VolatilityAdjuster with gamma0 fitted from the full universe's pooled
+    daily returns (Golts & Jones 2023, Appendix A: a single gamma0 fitted
+    across the whole universe, not per-asset), replacing the paper's
+    illustrative default of 1.6. Cached: refitting on every reactive trigger
+    would be wasteful, and the fitted value only depends on the (static)
+    cleaned_data history, not on any per-request investor input."""
+    universe = load_default_universe()
+    returns_by_ticker = {t: universe.frames[t]["Log_Return"].to_numpy() for t in universe.tickers}
+    gamma0 = CalibrationSuite.fit_gamma0_for_universe(returns_by_ticker)
+    return VolatilityAdjuster(gamma0=gamma0)
 
 
 @dataclass(frozen=True)
@@ -50,7 +67,7 @@ def decompose_universe(profile: InvestorProfile, tickers: list[str] | None = Non
     if not selected:
         selected = universe.tickers
     cashflow = CashFlowEstimator()
-    volatility = VolatilityAdjuster()
+    volatility = calibrated_volatility_adjuster()
     decomposer = GoalDecomposer()
 
     rows: list[dict] = []

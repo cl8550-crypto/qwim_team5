@@ -90,19 +90,41 @@ class Test_Calibration:
         fraction = CalibrationSuite.tail_variance_fraction(rng.normal(0, 0.01, 5000))
         assert 0.0 < fraction < 0.35
 
-    def test_fit_kappa_floors_at_one(self) -> None:
+    def test_fit_gamma0_floors_at_one(self) -> None:
         rng = np.random.default_rng(5)
         heavy = rng.standard_t(df=2, size=5000) * 0.01
-        assert CalibrationSuite.fit_kappa(heavy) >= 1.0
+        assert CalibrationSuite.fit_gamma0(heavy) >= 1.0
 
     def test_default_recovered_at_quarter_tail(self) -> None:
-        # tail fraction 0.25 -> kappa = 2.0 (module default)
+        # tail fraction 0.25 -> gamma0 = 2.0 (close to the paper's own 1.6)
         class _Fake(CalibrationSuite):
             @staticmethod
             def tail_variance_fraction(returns, z=2.0):
                 return 0.25
 
-        assert _Fake.fit_kappa(np.zeros(100)) == pytest.approx(2.0)
+        assert _Fake.fit_gamma0(np.zeros(100)) == pytest.approx(2.0)
+
+    def test_fit_gamma0_for_universe_pools_all_assets(self) -> None:
+        rng = np.random.default_rng(5)
+        returns_by_ticker = {
+            "A": rng.normal(0, 0.01, 500),
+            "B": rng.standard_t(df=3, size=500) * 0.01,
+        }
+        gamma0 = CalibrationSuite.fit_gamma0_for_universe(returns_by_ticker)
+        assert gamma0 >= 1.0
+
+    def test_fit_gamma0_for_universe_is_scale_invariant(self) -> None:
+        """A single huge-volatility asset must not dominate the pooled fit
+        purely by scale: standardizing per-asset before pooling means a mix
+        of a low-vol and a high-vol asset with similarly-shaped (Gaussian)
+        tails should NOT collapse to the gamma0=1.0 floor."""
+        rng = np.random.default_rng(5)
+        returns_by_ticker = {
+            "low_vol": rng.normal(0, 0.001, 2000),  # e.g. T-bill-like
+            "high_vol": rng.normal(0, 0.5, 2000),  # e.g. VIX-futures-like, same shape
+        }
+        gamma0 = CalibrationSuite.fit_gamma0_for_universe(returns_by_ticker)
+        assert gamma0 > 1.2  # near the pure-Gaussian gamma0 (~1.94), not floored
 
     def test_walk_forward_produces_folds(self) -> None:
         data = np.arange(100.0)
