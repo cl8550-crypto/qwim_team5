@@ -116,6 +116,11 @@ def build_subtab_reporting_ui_impl_QWIM(
                                 "Monte Carlo Simulation",
                                 value=True,
                             ),
+                            ui.input_checkbox(
+                                "input_ID_tab_results_subtab_reporting_checkbox_include_goal_parity",
+                                "Goal Parity Model",
+                                value=True,
+                            ),
                         ),
                     ),
                     class_="border rounded p-3 bg-white mb-3",
