@@ -55,13 +55,16 @@ def _load_goal_parity_outputs() -> dict[str, Any]:
 
 def build_plotnine_goal_parity_weights(
     *, top_weights: list[dict[str, Any]]) -> Any:
-    """Build a bar chart of the strategic portfolio's top weights."""
+    """Build a bar chart of the strategic portfolio's top weights, labelled
+    by full asset name (client-facing; tickers alone are not meaningful to
+    most clients)."""
     try:
         if not top_weights:
             return None
         df = pd.DataFrame(top_weights).sort_values("weight", ascending=False).reset_index(drop=True)
+        label_col = "name" if "name" in df.columns else "ticker"
         return (
-            ggplot(df, aes(x="ticker", y="weight", fill="ticker"))
+            ggplot(df, aes(x=label_col, y="weight", fill=label_col))
             + geom_col(show_legend=False)
             + labs(title="Goal Parity Strategic Weights", x="Asset", y="Weight")
             + _QWIM_THEME
