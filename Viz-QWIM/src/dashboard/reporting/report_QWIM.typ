@@ -1311,100 +1311,111 @@ The simulation runs #field(out_sim.summary_statistics, "num_scenarios") scenario
 #pagebreak()
 
 #if config.at("include_goal_parity", default: true) [
-= Goal Parity Model
+= Your Goal Parity Portfolio
 
 #section_rule()
 
-The Goal Parity model (Cron & Golts 2022; Golts & Jones 2023) decomposes every
-asset into four universal goals -- *Liquidity*, *Income*, *Preservation*, and
-*Growth* -- weighted by the investor's own strategic horizon and loss
-tolerance, then constructs a portfolio that "powers" those goals in
-proportion to the investor's preferences.
+Your portfolio is built around four goals that work together to support your
+financial life:
+
+#grid(
+  columns: (1fr, 1fr, 1fr, 1fr),
+  gutter: 0.6em,
+  [*Liquidity* \ Cash you can access quickly if you need it],
+  [*Income* \ Regular, dependable payments],
+  [*Preservation* \ Protecting what you've already saved],
+  [*Growth* \ Building wealth over the long run],
+)
+
+#v(0.5em)
+
+Instead of picking investments one at a time, your portfolio was built so
+that all four goals are supported together -- based on how long you're
+investing for and how comfortable you are with ups and downs along the way.
 
 // ---------------------------------------------------------------------------
-== Investor Profile
+== Your Profile
 
 #styled_table(
   columns: (auto, 1fr),
   table.header(
-    text(fill: white, weight: "bold")[Parameter],
-    text(fill: white, weight: "bold")[Value],
+    text(fill: white, weight: "bold")[ ],
+    text(fill: white, weight: "bold")[ ],
   ),
-  [Strategic Horizon],       [#field(in_gp, "strategic_horizon_years") years],
-  [Rebalancing Frequency],   [Every #field(in_gp, "rebalancing_frequency_months") months],
-  [Risk Profile],            [#field(in_gp, "risk_profile")],
-  [Risk Aversion (η)],       [#field(in_gp, "risk_aversion_eta")],
-  [Loss Barrier b(η)],       [#fmt_pct(in_gp.at("loss_barrier_b", default: 0.0))],
-  [Loss Tolerance (1 − b)],  [#fmt_pct(in_gp.at("loss_tolerance", default: 0.0))],
+  [Time Horizon],            [#field(in_gp, "strategic_horizon_years") years],
+  [Review Frequency],        [Every #field(in_gp, "rebalancing_frequency_months") months],
+  [Risk Comfort Level],      [#field(in_gp, "risk_profile")],
+  [Comfort with a Market Downturn],
+    [Comfortable with a decline of up to #fmt_pct(in_gp.at("loss_tolerance", default: 0.0)) before adjusting course],
 )
 
 // ---------------------------------------------------------------------------
-== Strategic Portfolio (Goal Parity Balanced)
+== How Your Portfolio Supports Each Goal
 
 #grid(
   columns: (1fr, 1fr, 1fr, 1fr),
   gutter: 0.8em,
-  kpi_card("Liquidity", fmt_pct(out_gp.goal_powers.Liquidity), sub: "Target 25%"),
-  kpi_card("Income", fmt_pct(out_gp.goal_powers.Income), sub: "Target 25%",
+  kpi_card("Liquidity", fmt_pct(out_gp.goal_powers.Liquidity), sub: "Balanced target: 25%"),
+  kpi_card("Income", fmt_pct(out_gp.goal_powers.Income), sub: "Balanced target: 25%",
     accent: rgb("#0f766e")),
-  kpi_card("Preservation", fmt_pct(out_gp.goal_powers.Preservation), sub: "Target 25%"),
-  kpi_card("Growth", fmt_pct(out_gp.goal_powers.Growth), sub: "Target 25%",
+  kpi_card("Preservation", fmt_pct(out_gp.goal_powers.Preservation), sub: "Balanced target: 25%"),
+  kpi_card("Growth", fmt_pct(out_gp.goal_powers.Growth), sub: "Balanced target: 25%",
     accent: rgb("#b91c1c")),
 )
 
 #v(0.8em)
 
-*Expected portfolio return:* #fmt_pct(out_gp.at("expected_return", default: 0.0)) per year.
+*Expected annual return:* #fmt_pct(out_gp.at("expected_return", default: 0.0))
 
 #figure(
   image("outputs_images/chart_goal_parity_goal_powers.svg", width: 90%),
-  caption: [Goal Parity -- Achieved Goal Powers vs. Balanced Target (25% each)],
+  caption: [How your portfolio supports each goal, compared to an evenly balanced target],
 )
 
 #if out_gp.top_weights.len() > 0 [
+== What You're Invested In
+
 #styled_table(
   columns: (1fr, 1fr),
   table.header(
-    text(fill: white, weight: "bold")[Asset],
-    text(fill: white, weight: "bold")[Weight],
+    text(fill: white, weight: "bold")[Investment],
+    text(fill: white, weight: "bold")[% of Portfolio],
   ),
   ..out_gp.top_weights.map(row => (
-    [#row.at("ticker", default: "N/A")],
+    [#row.at("name", default: row.at("ticker", default: "N/A"))],
     [#fmt_pct(row.at("weight", default: 0.0))],
   )).flatten()
 )
 
 #figure(
   image("outputs_images/chart_goal_parity_weights.svg", width: 90%),
-  caption: [Goal Parity -- Strategic Portfolio Weights],
+  caption: [Your portfolio's current holdings],
 )
 ] else [
-#note_box[No portfolio weights available.]
+#note_box[No portfolio holdings available.]
 ]
 
 // ---------------------------------------------------------------------------
-== Tactical Rebalancing
+== Keeping Your Portfolio on Track
 
 #if out_gp.rebalancing.traded [
 #note_box[
-  *Rebalanced:* #field(out_gp.rebalancing, "num_trades") trades executed,
-  #fmt_pct(out_gp.rebalancing.at("turnover", default: 0.0)) one-way turnover,
-  re-aligning the portfolio's goal powers toward the strategic target.
+  *Your portfolio was recently rebalanced:* #field(out_gp.rebalancing, "num_trades")
+  trades were made, adjusting about #fmt_pct(out_gp.rebalancing.at("turnover", default: 0.0))
+  of the portfolio, to keep it aligned with your goals as markets moved.
 ]
 ] else [
 #note_box[
-  *No rebalancing needed:* goal-power drift is within the cost-benefit
-  threshold, so no trades were executed.
+  *No adjustments were needed:* your portfolio remains well-aligned with your
+  goals, so no trades were made at this time. This helps avoid unnecessary
+  costs from over-trading.
 ]
 ]
 
 #note_box[
-  *Methodology:* strategic weights solve
-  max_w a·w − (1/2c)·Σ_k(P_k(w) − θ_k)² − (1/2κ)·w·w subject to Σw = 1,
-  where P_k(w) is the portfolio's power for goal k and θ_k is the target
-  allocation (25% each for Goal Parity Balanced). Tactical rebalancing uses a
-  signal-priority heuristic (Arnott, Li & Linnainmaa 2024), executing only
-  trades whose goal-realignment benefit clears their transaction cost.
+  This approach is based on the Goal Parity framework (Golts & Jones, 2023),
+  a peer-reviewed academic methodology for building portfolios around an
+  investor's personal goals rather than a one-size-fits-all objective.
   *Results are illustrative and do not constitute investment advice.*
 ]
 ] // end include_goal_parity

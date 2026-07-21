@@ -54,8 +54,8 @@ def export_inputs_goal_parity_impl_QWIM(
             "strategic_horizon_years": profile.T,
             "rebalancing_frequency_months": profile.tau_months,
             "risk_profile": profile.risk_profile,
-            "risk_aversion_eta": profile.eta,
-            "loss_barrier_b": profile.b,
+            "risk_aversion_eta": profile.eta,  # retained for internal/methodology use only
+            "loss_barrier_b": profile.b,  # retained for internal/methodology use only
             "loss_tolerance": profile.loss_tolerance,
         }
 
@@ -79,15 +79,17 @@ def export_outputs_goal_parity_impl_QWIM(
                 run_rebalance_demo,
                 run_strategic,
             )
+            from src.models.goal_parity import load_default_universe
 
             profile = _build_investor_profile_QWIM(reactives_shiny=reactives_shiny)
             pipeline = decompose_universe(profile)
             strategic = run_strategic(pipeline, mode="balanced")
             rebalance = run_rebalance_demo(pipeline, strategic)
 
+            asset_names = load_default_universe().names
             top_weights = sorted(
                 (
-                    {"ticker": t, "weight": float(w)}
+                    {"ticker": t, "name": asset_names.get(t, t), "weight": float(w)}
                     for t, w in zip(strategic.tickers, strategic.weights)
                     if w > 0.01
                 ),
