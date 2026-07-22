@@ -37,8 +37,11 @@ def subtab_goal_parity_optimization_ui(
             "max_w a·w − (1/2c)·Σ(P_k(w)−θ_k)² − (1/2κ)·w·w subject to Σw=1 "
             "(SLSQP). *Balanced* targets all four goal powers at 25% each. "
             "*Tilted* solves the identical objective with the target vector "
-            "upweighted to 100% on the tilted goal (0% on the rest), per Golts "
-            "& Jones (2023) p.12 — not a separately constrained maximization. "
+            "upweighted toward the tilted goal, per Golts & Jones (2023) p.12 "
+            "— not a separately constrained maximization. *Tilt strength* "
+            "interpolates the target between Balanced (0%, all goals at 25%) "
+            "and a maximal tilt (100%, the tilted goal at 100% and the rest "
+            "at 0%). "
             "Assets with a structurally negative expected return have their "
             "own weight bound capped, so goal classification alone cannot "
             "justify a large allocation to a money-losing position."
@@ -51,8 +54,16 @@ def subtab_goal_parity_optimization_ui(
                     choices={"balanced": "Goal Parity Balanced", "tilted": "Goal Tilted"},
                     selected="balanced",
                 ),
-                ui.input_select(
-                    "input_tilt_goal", "Tilted goal", choices=list(GOALS), selected="Growth"
+                ui.panel_conditional(
+                    "input.input_mode === 'tilted'",
+                    ui.input_select(
+                        "input_tilt_goal", "Tilted goal", choices=list(GOALS), selected="Growth"
+                    ),
+                    ui.input_slider(
+                        "input_tilt_strength",
+                        "Tilt strength",
+                        min=0, max=100, value=100, step=5, post="%",
+                    ),
                 ),
                 width=300,
             ),
@@ -81,7 +92,12 @@ def subtab_goal_parity_optimization_server(  # pragma: no cover
     @reactive.calc
     def strategic():
         pipeline = decompose_universe(profile(), selected_tickers())
-        return run_strategic(pipeline, mode=input.input_mode(), tilt_goal=input.input_tilt_goal())
+        return run_strategic(
+            pipeline,
+            mode=input.input_mode(),
+            tilt_goal=input.input_tilt_goal(),
+            tilt_strength=input.input_tilt_strength() / 100.0,
+        )
 
     @render.text
     def output_optimization_summary() -> str:
