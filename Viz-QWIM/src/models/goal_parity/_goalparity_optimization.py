@@ -18,6 +18,25 @@ theta = (Liquidity=0, Income=0, Preservation=0, Growth=100%). The paper's own
 "maximal" tilts use 100%/0% targets; it also notes an investor may choose "a
 more moderate tilt (such as 50% growth)," interpolating between Balanced and
 the full tilt -- implemented here as ``tilt_strength`` in [0, 1].
+
+Low-return eligibility cap: at theta -> 0%/100% (a maximal tilt), the
+quadratic tracking penalty's coefficient 1/(2c) is ~100x the return term's
+linear coefficient, so the optimizer effectively maximizes goal-share
+*classification* almost irrespective of a·w. In a universe containing a
+structurally negative-carry instrument that happens to score at the extreme
+corner of the tilted goal (e.g. VIX futures scoring near-pure Growth via
+Pi_default*Pi_liquidity~1, despite realized returns around -80%/year from
+futures-roll decay), this can concentrate a large weight in an asset that
+actively destroys the tilted portfolio's expected return. Rather than
+special-case Growth or exclude assets from the universe outright, any
+asset whose expected return falls below ``min_expected_return_for_full_weight``
+has its own weight bound tightened to ``capped_weight_for_low_return``
+(default 2%) instead of ``w_max`` -- letting the optimizer still use it in
+small size (e.g. for genuine diversification/hedging value) without letting
+goal-classification alone justify a large allocation to a money-losing
+asset. This does not change Balanced-mode results in the team's own
+18-asset universe (no asset there is both goal-scarce and negative-return
+enough to bind), only the maximal-tilt pathology it was built to fix.
 """
 
 from __future__ import annotations
@@ -73,14 +92,23 @@ class StrategicOptimizer:
         c: float = 0.005,
         kappa_diversification: float = 10.0,
         w_max: float = 0.35,
+        min_expected_return_for_full_weight: float = 0.0,
+        capped_weight_for_low_return: float = 0.02,
     ) -> None:
         if c <= 0 or kappa_diversification <= 0:
             raise ValueError("tuning constants c and kappa must be positive")
         if not 0 < w_max <= 1:
             raise ValueError(f"w_max must be in (0, 1], got {w_max}")
+        if not 0 <= capped_weight_for_low_return <= w_max:
+            raise ValueError(
+                f"capped_weight_for_low_return must be in [0, w_max={w_max}], "
+                f"got {capped_weight_for_low_return}",
+            )
         self.c = c
         self.kappa_diversification = kappa_diversification
         self.w_max = w_max
+        self.min_expected_return_for_full_weight = min_expected_return_for_full_weight
+        self.capped_weight_for_low_return = capped_weight_for_low_return
 
     # ------------------------------------------------------------------
     def _solve_for_theta(
@@ -106,7 +134,15 @@ class StrategicOptimizer:
             )
 
         w0 = np.full(n, 1.0 / n)
-        bounds = [(0.0, self.w_max)] * n
+        upper_bounds = np.where(
+            exp_returns < self.min_expected_return_for_full_weight,
+            self.capped_weight_for_low_return,
+            self.w_max,
+        )
+        # w0 must itself respect the tightened bounds, or SLSQP starts infeasible.
+        w0 = np.minimum(w0, upper_bounds)
+        w0 = w0 / w0.sum()
+        bounds = [(0.0, float(ub)) for ub in upper_bounds]
         constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1.0}]
         result = minimize(
             objective,
@@ -116,7 +152,7 @@ class StrategicOptimizer:
             constraints=constraints,
             options={"maxiter": 500, "ftol": 1e-10},
         )
-        weights = np.clip(result.x, 0.0, self.w_max)
+        weights = np.clip(result.x, 0.0, upper_bounds)
         weights = weights / weights.sum()
         powers = S.T @ weights
         return OptimizationResult(
