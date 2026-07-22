@@ -15,7 +15,6 @@ from shiny import module, reactive, render, ui
 from shinywidgets import output_widget, render_widget
 
 from src.dashboard.shiny_tab_goal_parity._tab_goal_parity_pipeline import (
-    decompose_universe,
     run_strategic,
     scarce_goals,
 )
@@ -84,16 +83,14 @@ def subtab_goal_parity_optimization_server(  # pragma: no cover
     data_utils: dict,
     data_inputs: dict,
     reactives_shiny: dict,
-    profile,
-    selected_tickers,
+    pipeline,
 ):
     del output, session, data_utils, data_inputs, reactives_shiny
 
     @reactive.calc
     def strategic():
-        pipeline = decompose_universe(profile(), selected_tickers())
         return run_strategic(
-            pipeline,
+            pipeline(),
             mode=input.input_mode(),
             tilt_goal=input.input_tilt_goal(),
             tilt_strength=input.input_tilt_strength() / 100.0,
@@ -110,8 +107,7 @@ def subtab_goal_parity_optimization_server(  # pragma: no cover
 
     @render.ui
     def output_scarcity_warning():
-        pipeline = decompose_universe(profile(), selected_tickers())
-        scarce = scarce_goals(pipeline)
+        scarce = scarce_goals(pipeline())
         if not scarce:
             return None
         goals_text = " and ".join(scarce) if len(scarce) <= 2 else ", ".join(scarce)
