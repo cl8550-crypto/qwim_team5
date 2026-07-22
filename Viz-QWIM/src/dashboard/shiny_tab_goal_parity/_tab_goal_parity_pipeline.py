@@ -54,6 +54,34 @@ class PipelineOutput:
     cash_tickers: list[str]
 
 
+#: Below this max single-asset goal share, no asset in the universe -- and
+#: therefore no portfolio built from it, even at 100% weight -- can power the
+#: goal much past this level. Distinguishes "structurally scarce in this data"
+#: from "the optimizer under-shot." Chosen with headroom below the Income
+#: goal's ~0.44 max share (the next-lowest of the four in the 18-asset
+#: universe), well above Preservation's observed ~0.11.
+SCARCE_GOAL_MAX_SHARE_THRESHOLD: float = 0.20
+
+
+def scarce_goals(pipeline: PipelineOutput) -> list[str]:
+    """Goals with no meaningfully-scoring asset in the selected universe.
+
+    Cheap proxy for "what's the max achievable power at 100% tilt": the max
+    per-asset goal share, read directly off `shares_by_ticker`, needs no
+    optimizer solve and empirically tracks the expensive full-tilt result
+    (e.g. Preservation: ~0.11 max share vs. ~0.10 max achieved tilted power).
+    """
+    scarce = []
+    for goal in GOALS:
+        max_share = max(
+            (pipeline.shares_by_ticker[t][goal] for t in pipeline.tickers),
+            default=0.0,
+        )
+        if max_share < SCARCE_GOAL_MAX_SHARE_THRESHOLD:
+            scarce.append(goal)
+    return scarce
+
+
 def available_assets() -> dict[str, str]:
     """ticker -> display label for the dashboard checkbox group."""
     universe = load_default_universe()

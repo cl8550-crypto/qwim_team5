@@ -78,6 +78,7 @@ def export_outputs_goal_parity_impl_QWIM(
                 decompose_universe,
                 run_rebalance_demo,
                 run_strategic,
+                scarce_goals,
             )
             from src.models.goal_parity import load_default_universe
 
@@ -101,6 +102,7 @@ def export_outputs_goal_parity_impl_QWIM(
                 "solver_success": bool(strategic.success),
                 "expected_return": float(strategic.expected_return),
                 "goal_powers": {goal: float(strategic.goal_powers[goal]) for goal in GOALS},
+                "scarce_goals": scarce_goals(pipeline),
                 "top_weights": top_weights,
                 "rebalancing": {
                     "traded": bool(rebalance.traded),
@@ -117,6 +119,7 @@ def export_outputs_goal_parity_impl_QWIM(
                 "solver_success": False,
                 "expected_return": 0.0,
                 "goal_powers": {goal: 0.25 for goal in GOALS},
+                "scarce_goals": [],
                 "top_weights": [],
                 "rebalancing": {
                     "traded": False,
