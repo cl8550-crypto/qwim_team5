@@ -10,7 +10,9 @@ its own dashboard tab with one subtab per pipeline stage:
 4. Tactical Rebalancing — Step 6 (signal-priority trades)
 
 The subtab servers are chained through returned reactives: profile ->
-selected tickers -> strategic result -> rebalancing.
+(selected tickers, Steps 2-4 pipeline) -> strategic result -> rebalancing.
+The pipeline is computed once in the Asset Map subtab and shared downstream,
+rather than recomputed independently in each subtab.
 """
 
 from __future__ import annotations
@@ -98,7 +100,7 @@ def tab_goal_parity_server(  # pragma: no cover
         data_inputs=data_inputs,
         reactives_shiny=reactives_shiny,
     )
-    selected_tickers = subtab_goal_parity_asset_map_server(  # type: ignore[call-arg]
+    selected_tickers, pipeline = subtab_goal_parity_asset_map_server(  # type: ignore[call-arg]
         id="ID_tab_goal_parity_subtab_asset_map",  # pyright: ignore[reportCallIssue]
         data_utils=data_utils,
         data_inputs=data_inputs,
@@ -110,20 +112,19 @@ def tab_goal_parity_server(  # pragma: no cover
         data_utils=data_utils,
         data_inputs=data_inputs,
         reactives_shiny=reactives_shiny,
-        profile=profile,
-        selected_tickers=selected_tickers,
+        pipeline=pipeline,
     )
     subtab_goal_parity_rebalancing_server(  # type: ignore[call-arg]
         id="ID_tab_goal_parity_subtab_rebalancing",  # pyright: ignore[reportCallIssue]
         data_utils=data_utils,
         data_inputs=data_inputs,
         reactives_shiny=reactives_shiny,
-        profile=profile,
-        selected_tickers=selected_tickers,
+        pipeline=pipeline,
         strategic=strategic,
     )
     return {
         "Profile_Server": profile,
         "Selected_Tickers": selected_tickers,
+        "Pipeline_Server": pipeline,
         "Strategic_Server": strategic,
     }

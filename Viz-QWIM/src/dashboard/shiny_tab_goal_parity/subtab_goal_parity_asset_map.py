@@ -3,7 +3,10 @@
 Lets the user select the asset universe (checkboxes, per the advisor's
 guidance that universe selection happens at dashboard level) and shows each
 asset's option triggers, goal shares, and position on the 2D asset map.
-The server returns a reactive list of selected tickers for downstream subtabs.
+The server returns (selected_tickers, pipeline): a reactive list of selected
+tickers, and the Steps 2-4 decomposition reactive, both for downstream
+subtabs. Computing the pipeline once here (rather than once per subtab)
+avoids three redundant `decompose_universe()` calls per dashboard session.
 """
 
 from __future__ import annotations
@@ -122,4 +125,4 @@ def subtab_goal_parity_asset_map_server(  # pragma: no cover
             display[column] = display[column].map(lambda v: f"{v:.3f}")
         return display
 
-    return selected_tickers
+    return selected_tickers, pipeline

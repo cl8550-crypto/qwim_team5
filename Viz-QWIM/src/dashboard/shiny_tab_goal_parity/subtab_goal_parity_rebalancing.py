@@ -15,10 +15,7 @@ import plotly.express as px
 from shiny import module, reactive, render, ui
 from shinywidgets import output_widget, render_widget
 
-from src.dashboard.shiny_tab_goal_parity._tab_goal_parity_pipeline import (
-    decompose_universe,
-    run_rebalance_demo,
-)
+from src.dashboard.shiny_tab_goal_parity._tab_goal_parity_pipeline import run_rebalance_demo
 from src.models.goal_parity.utils_goal_parity import GOALS
 from src.utils.custom_exceptions_errors_loggers.logger_custom import get_logger
 
@@ -63,17 +60,15 @@ def subtab_goal_parity_rebalancing_server(  # pragma: no cover
     data_utils: dict,
     data_inputs: dict,
     reactives_shiny: dict,
-    profile,
-    selected_tickers,
+    pipeline,
     strategic,
 ):
     del output, session, data_utils, data_inputs, reactives_shiny
 
     @reactive.calc
     def rebalance():
-        pipeline = decompose_universe(profile(), selected_tickers())
         return run_rebalance_demo(
-            pipeline,
+            pipeline(),
             strategic(),
             drift_scale=float(input.input_drift_scale() or 0.25),
             seed=int(input.input_drift_seed() or 5),
