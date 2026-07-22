@@ -4,10 +4,16 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from scipy import stats as sp_stats
 
 from src.models.goal_parity import AssetUniverse, CalibrationSuite, GoalDecomposer
 from src.models.goal_parity._goalparity_asset_map import asset_map_coordinates
-from src.models.goal_parity._goalparity_data import find_cleaned_data_dir
+from src.models.goal_parity._goalparity_data import (
+    SKEW_CLIP,
+    _ewma_annualized_volatility,
+    _winsorized_expanding_skew,
+    find_cleaned_data_dir,
+)
 
 
 class Test_Asset_Universe:
@@ -47,6 +53,44 @@ class Test_Asset_Universe:
 
     def test_find_cleaned_data_dir_resolves(self) -> None:
         assert find_cleaned_data_dir().name == "cleaned_data"
+
+
+class Test_Ewma_Volatility_And_Winsorized_Skew:
+    """Golts & Jones (2023), Appendix "Data and Methodology": EWMA vol over a
+    trailing window, skew on returns Winsorized at +/-1 sigma over an
+    expanding window, itself clipped to +/-1."""
+
+    def test_ewma_volatility_recency_tilted_vs_equal_weighted(self) -> None:
+        """A regime shift (low-vol history, high-vol recent) should pull the
+        EWMA estimate toward the recent regime more than a flat average."""
+        rng = np.random.default_rng(5)
+        old_regime = rng.normal(0, 0.001, 1000)
+        recent_regime = rng.normal(0, 0.05, 500)
+        returns = np.concatenate([old_regime, recent_regime])
+        equal_weighted = float(np.std(returns, ddof=1))
+        ewma = _ewma_annualized_volatility(returns) / np.sqrt(252)
+        assert ewma > equal_weighted
+
+    def test_winsorized_skew_is_clipped_to_bounds(self) -> None:
+        rng = np.random.default_rng(5)
+        # A single extreme outlier would otherwise dominate the raw skew.
+        returns = np.concatenate([rng.normal(0, 0.01, 999), [5.0]])
+        gamma = _winsorized_expanding_skew(returns)
+        assert -SKEW_CLIP <= gamma <= SKEW_CLIP
+
+    def test_winsorized_skew_dampens_outlier_influence(self) -> None:
+        """Winsorizing at +/-1 sigma before computing skew, then clipping the
+        result to +/-1, should pull a single extreme outlier's effect in by
+        an order of magnitude versus the raw (unwinsorized) skew."""
+        rng = np.random.default_rng(5)
+        base = rng.normal(0, 0.01, 999)
+        with_outlier = np.concatenate([base, [5.0]])
+        raw_gamma = sp_stats.skew(with_outlier, bias=False)
+        winsorized_gamma = _winsorized_expanding_skew(with_outlier)
+        assert abs(winsorized_gamma) < abs(raw_gamma) / 10
+
+    def test_zero_variance_series_returns_zero_skew(self) -> None:
+        assert _winsorized_expanding_skew(np.zeros(100)) == 0.0
 
 
 class Test_Asset_Map:

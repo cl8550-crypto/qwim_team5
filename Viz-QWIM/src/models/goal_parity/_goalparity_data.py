@@ -25,6 +25,21 @@ from scipy import stats as sp_stats
 
 #: Trading days per year, used to annualize daily log-return statistics.
 TRADING_DAYS: int = 252
+TRADING_DAYS_PER_MONTH: float = TRADING_DAYS / 12
+
+#: Golts & Jones (2023), "Data and Methodology": volatility is an
+#: exponentially weighted average (420-month half-life) over a trailing
+#: 120-month window; skewness uses returns Winsorized at +/-1 sigma over an
+#: expanding window, with the resulting skewness estimate itself clipped to
+#: +/-1. The paper's data is monthly (1970-2022); ours is daily and shorter
+#: (ETF-inception-limited), so the window/half-life are converted to
+#: daily-equivalent counts via TRADING_DAYS_PER_MONTH, and "expanding window"
+#: collapses to "all available history" since this is a point-in-time
+#: snapshot tool, not a walk-forward backtest.
+EWMA_VOL_HALF_LIFE_DAYS: float = 420 * TRADING_DAYS_PER_MONTH
+EWMA_VOL_WINDOW_DAYS: int = round(120 * TRADING_DAYS_PER_MONTH)
+SKEW_WINSORIZE_SIGMA: float = 1.0
+SKEW_CLIP: float = 1.0
 
 #: Fraction of total return attributed to "return ON capital" (RN_t: coupons,
 #: dividends, carry) per asset class — Step 2 RC/RN split (Roadmap Sec 3.2).
@@ -77,6 +92,33 @@ def find_cleaned_data_dir(start: Path | None = None) -> Path:
         "cleaned_data folder not found; clone qwim_team5 so that Viz-QWIM sits "
         "inside it, or set GOAL_PARITY_DATA_DIR"
     )
+
+
+def _ewma_annualized_volatility(returns: np.ndarray) -> float:
+    """Annualized EWMA volatility over a trailing window (Appendix, "Data and
+    Methodology"): most-recent `EWMA_VOL_WINDOW_DAYS` observations, weighted
+    by exponential decay with half-life `EWMA_VOL_HALF_LIFE_DAYS` (recency
+    tilt only, since the half-life is much longer than the window)."""
+    windowed = returns[-EWMA_VOL_WINDOW_DAYS:]
+    ages = np.arange(windowed.size - 1, -1, -1)  # 0 = most recent
+    weights = 0.5 ** (ages / EWMA_VOL_HALF_LIFE_DAYS)
+    weights /= weights.sum()
+    weighted_mean = float(np.sum(weights * windowed))
+    weighted_var = float(np.sum(weights * (windowed - weighted_mean) ** 2))
+    return float(np.sqrt(weighted_var * TRADING_DAYS))
+
+
+def _winsorized_expanding_skew(returns: np.ndarray) -> float:
+    """Skewness on returns Winsorized at +/-1 sigma, over the full available
+    (expanding-to-today) history, itself clipped to +/-1 (Appendix, "Data and
+    Methodology")."""
+    std = float(np.std(returns, ddof=1))
+    if std == 0.0:
+        return 0.0
+    mean = float(np.mean(returns))
+    winsorized = np.clip(returns, mean - SKEW_WINSORIZE_SIGMA * std, mean + SKEW_WINSORIZE_SIGMA * std)
+    gamma = float(sp_stats.skew(winsorized, bias=False))
+    return float(np.clip(gamma, -SKEW_CLIP, SKEW_CLIP))
 
 
 def _parse_asset_file(path: Path) -> tuple[str, str, pl.DataFrame]:
@@ -146,11 +188,15 @@ class AssetUniverse:
         return out.sort("Date")
 
     def stats(self, ticker: str) -> AssetStats:
-        """Annualized a / sigma / gamma for one asset (Roadmap Sec 2, Sec 5)."""
+        """Annualized a / sigma / gamma for one asset (Roadmap Sec 2, Sec 5).
+        sigma and gamma follow the paper's Appendix ("Data and Methodology"):
+        EWMA-weighted trailing-window volatility and Winsorized
+        expanding-window skewness (see `_ewma_annualized_volatility` /
+        `_winsorized_expanding_skew`)."""
         returns = self.frames[ticker]["Log_Return"].to_numpy()
         a = float(np.mean(returns) * TRADING_DAYS)
-        sigma = float(np.std(returns, ddof=1) * np.sqrt(TRADING_DAYS))
-        gamma = float(sp_stats.skew(returns, bias=False))
+        sigma = _ewma_annualized_volatility(returns)
+        gamma = _winsorized_expanding_skew(returns)
         asset_class = self.classes[ticker]
         return AssetStats(
             ticker=ticker,
