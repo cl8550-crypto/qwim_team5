@@ -55,6 +55,9 @@
 #let in_sim  = results.at("Portfolio_Simulation_Inputs",           default: (:))
 #let out_sim = results.at("Portfolio_Simulation_Outputs",          default: (:))
 
+#let in_gp  = results.at("Goal_Parity_Inputs",                     default: (:))
+#let out_gp = results.at("Goal_Parity_Outputs",                    default: (:))
+
 // ---- Defensive helpers ----------------------------------------------------
 // safe_merge: merge *actual* (from JSON) into *defaults* — avoids the
 // "cannot spread dictionary into array" error that (..) spreads can trigger.
@@ -114,6 +117,35 @@
   )
   if type(out_sim) == dictionary { out_sim + (summary_statistics: guarded_ss) }
   else { (summary_statistics: guarded_ss) }
+}
+
+// Guard out_gp.goal_powers / rebalancing
+#let _default_goal_powers = (Liquidity: 0.25, Income: 0.25, Preservation: 0.25, Growth: 0.25)
+#let _default_rebalancing = (traded: false, num_trades: 0, turnover: 0.0,
+  goal_powers_before: _default_goal_powers, goal_powers_after: _default_goal_powers)
+#let out_gp = {
+  let _gpow = if type(out_gp) == dictionary { out_gp.at("goal_powers", default: (:)) } else { (:) }
+  let _gpow = if type(_gpow) == dictionary { _gpow } else { (:) }
+  let _reb  = if type(out_gp) == dictionary { out_gp.at("rebalancing", default: (:)) } else { (:) }
+  let _reb  = if type(_reb) == dictionary { _reb } else { (:) }
+  let guarded_goal_powers = safe_merge(_default_goal_powers, _gpow)
+  let guarded_rebalancing = (
+    traded: _reb.at("traded", default: false),
+    num_trades: _reb.at("num_trades", default: 0),
+    turnover: _reb.at("turnover", default: 0.0),
+    goal_powers_before: safe_merge(_default_goal_powers, _reb.at("goal_powers_before", default: (:))),
+    goal_powers_after: safe_merge(_default_goal_powers, _reb.at("goal_powers_after", default: (:))),
+  )
+  let base = if type(out_gp) == dictionary { out_gp } else { (:) }
+  base + (
+    mode: base.at("mode", default: "balanced"),
+    expected_return: base.at("expected_return", default: 0.0),
+    solver_success: base.at("solver_success", default: true),
+    goal_powers: guarded_goal_powers,
+    scarce_goals: safe_array(base.at("scarce_goals", default: ())),
+    top_weights: safe_array(base.at("top_weights", default: ())),
+    rebalancing: guarded_rebalancing,
+  )
 }
 
 // Guard out_sk.performance_summary
@@ -1277,6 +1309,137 @@ The simulation runs #field(out_sim.summary_statistics, "num_scenarios") scenario
   advice.*
 ]
 ] // end include_simulation
+
+#pagebreak()
+
+#if config.at("include_goal_parity", default: true) [
+= Your Goal Parity Portfolio
+
+#section_rule()
+
+Your portfolio is built around four goals that work together to support your
+financial life:
+
+#grid(
+  columns: (1fr, 1fr, 1fr, 1fr),
+  gutter: 0.6em,
+  [*Liquidity* \ Cash you can access quickly if you need it],
+  [*Income* \ Regular, dependable payments],
+  [*Preservation* \ Protecting what you've already saved],
+  [*Growth* \ Building wealth over the long run],
+)
+
+#v(0.5em)
+
+Instead of picking investments one at a time, your portfolio was built so
+that all four goals are supported together -- based on how long you're
+investing for and how comfortable you are with ups and downs along the way.
+
+// ---------------------------------------------------------------------------
+== Your Profile
+
+#styled_table(
+  columns: (auto, 1fr),
+  table.header(
+    text(fill: white, weight: "bold")[ ],
+    text(fill: white, weight: "bold")[ ],
+  ),
+  [Time Horizon],            [#field(in_gp, "strategic_horizon_years") years],
+  [Review Frequency],        [Every #field(in_gp, "rebalancing_frequency_months") months],
+  [Risk Comfort Level],      [#field(in_gp, "risk_profile")],
+  [Comfort with a Market Downturn],
+    [Comfortable with a decline of up to #fmt_pct(in_gp.at("loss_tolerance", default: 0.0)) before adjusting course],
+)
+
+// ---------------------------------------------------------------------------
+== How Your Portfolio Supports Each Goal
+
+#if not out_gp.solver_success [
+#note_box[
+  *Please note:* the portfolio shown below did not fully converge during
+  calculation. The figures are the best result found and are usually still
+  reasonable, but we recommend confirming this allocation with your advisor
+  before acting on it.
+]
+]
+
+#if out_gp.scarce_goals.len() > 0 [
+#note_box[
+  *Please note:* #out_gp.scarce_goals.join(" and ") has limited support in
+  the current investment universe — no single holding scores highly enough
+  on this goal to power it much further, regardless of how the portfolio is
+  tilted. A low score here reflects the range of available investments, not
+  a shortfall in the optimization.
+]
+]
+
+#grid(
+  columns: (1fr, 1fr, 1fr, 1fr),
+  gutter: 0.8em,
+  kpi_card("Liquidity", fmt_pct(out_gp.goal_powers.Liquidity), sub: "Balanced target: 25%"),
+  kpi_card("Income", fmt_pct(out_gp.goal_powers.Income), sub: "Balanced target: 25%",
+    accent: rgb("#0f766e")),
+  kpi_card("Preservation", fmt_pct(out_gp.goal_powers.Preservation), sub: "Balanced target: 25%"),
+  kpi_card("Growth", fmt_pct(out_gp.goal_powers.Growth), sub: "Balanced target: 25%",
+    accent: rgb("#b91c1c")),
+)
+
+#v(0.8em)
+
+*Expected annual return:* #fmt_pct(out_gp.at("expected_return", default: 0.0))
+
+#figure(
+  image("outputs_images/chart_goal_parity_goal_powers.svg", width: 90%),
+  caption: [How your portfolio supports each goal, compared to an evenly balanced target],
+)
+
+#if out_gp.top_weights.len() > 0 [
+== What You're Invested In
+
+#styled_table(
+  columns: (1fr, 1fr),
+  table.header(
+    text(fill: white, weight: "bold")[Investment],
+    text(fill: white, weight: "bold")[% of Portfolio],
+  ),
+  ..out_gp.top_weights.map(row => (
+    [#row.at("name", default: row.at("ticker", default: "N/A"))],
+    [#fmt_pct(row.at("weight", default: 0.0))],
+  )).flatten()
+)
+
+#figure(
+  image("outputs_images/chart_goal_parity_weights.svg", width: 90%),
+  caption: [Your portfolio's current holdings],
+)
+] else [
+#note_box[No portfolio holdings available.]
+]
+
+// ---------------------------------------------------------------------------
+== Keeping Your Portfolio on Track
+
+#if out_gp.rebalancing.traded [
+#note_box[
+  *Your portfolio was recently rebalanced:* #field(out_gp.rebalancing, "num_trades")
+  trades were made, adjusting about #fmt_pct(out_gp.rebalancing.at("turnover", default: 0.0))
+  of the portfolio, to keep it aligned with your goals as markets moved.
+]
+] else [
+#note_box[
+  *No adjustments were needed:* your portfolio remains well-aligned with your
+  goals, so no trades were made at this time. This helps avoid unnecessary
+  costs from over-trading.
+]
+]
+
+#note_box[
+  This approach is based on the Goal Parity framework (Golts & Jones, 2023),
+  a peer-reviewed academic methodology for building portfolios around an
+  investor's personal goals rather than a one-size-fits-all objective.
+  *Results are illustrative and do not constitute investment advice.*
+]
+] // end include_goal_parity
 
 #pagebreak()
 
