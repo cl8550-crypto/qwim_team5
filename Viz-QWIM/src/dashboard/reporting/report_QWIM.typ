@@ -140,7 +140,9 @@
   base + (
     mode: base.at("mode", default: "balanced"),
     expected_return: base.at("expected_return", default: 0.0),
+    solver_success: base.at("solver_success", default: true),
     goal_powers: guarded_goal_powers,
+    scarce_goals: safe_array(base.at("scarce_goals", default: ())),
     top_weights: safe_array(base.at("top_weights", default: ())),
     rebalancing: guarded_rebalancing,
   )
@@ -1351,6 +1353,25 @@ investing for and how comfortable you are with ups and downs along the way.
 
 // ---------------------------------------------------------------------------
 == How Your Portfolio Supports Each Goal
+
+#if not out_gp.solver_success [
+#note_box[
+  *Please note:* the portfolio shown below did not fully converge during
+  calculation. The figures are the best result found and are usually still
+  reasonable, but we recommend confirming this allocation with your advisor
+  before acting on it.
+]
+]
+
+#if out_gp.scarce_goals.len() > 0 [
+#note_box[
+  *Please note:* #out_gp.scarce_goals.join(" and ") has limited support in
+  the current investment universe — no single holding scores highly enough
+  on this goal to power it much further, regardless of how the portfolio is
+  tilted. A low score here reflects the range of available investments, not
+  a shortfall in the optimization.
+]
+]
 
 #grid(
   columns: (1fr, 1fr, 1fr, 1fr),

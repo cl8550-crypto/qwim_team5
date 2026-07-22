@@ -17,6 +17,7 @@ from shinywidgets import output_widget, render_widget
 from src.dashboard.shiny_tab_goal_parity._tab_goal_parity_pipeline import (
     decompose_universe,
     run_strategic,
+    scarce_goals,
 )
 from src.models.goal_parity.utils_goal_parity import GOALS, THETA_BALANCED
 from src.utils.custom_exceptions_errors_loggers.logger_custom import get_logger
@@ -34,8 +35,13 @@ def subtab_goal_parity_optimization_ui(
         ui.h3("Strategic Optimization (Step 5)"),
         ui.markdown(
             "max_w a·w − (1/2c)·Σ(P_k(w)−θ_k)² − (1/2κ)·w·w subject to Σw=1 "
-            "(SLSQP). *Balanced* targets all four goal powers at 25%; *Tilted* "
-            "maximizes one goal with feasibility-aware floors on the rest."
+            "(SLSQP). *Balanced* targets all four goal powers at 25% each. "
+            "*Tilted* solves the identical objective with the target vector "
+            "upweighted to 100% on the tilted goal (0% on the rest), per Golts "
+            "& Jones (2023) p.12 — not a separately constrained maximization. "
+            "Assets with a structurally negative expected return have their "
+            "own weight bound capped, so goal classification alone cannot "
+            "justify a large allocation to a money-losing position."
         ),
         ui.layout_sidebar(
             ui.sidebar(
@@ -51,6 +57,7 @@ def subtab_goal_parity_optimization_ui(
                 width=300,
             ),
             ui.output_text("output_optimization_summary"),
+            ui.output_ui("output_scarcity_warning"),
             output_widget("output_goal_power_plot"),
             output_widget("output_weights_plot"),
         ),
@@ -83,6 +90,26 @@ def subtab_goal_parity_optimization_server(  # pragma: no cover
         return (
             f"Mode: {result.mode} — solver {status}. "
             f"Expected portfolio return a·w = {result.expected_return:+.2%} per year."
+        )
+
+    @render.ui
+    def output_scarcity_warning():
+        pipeline = decompose_universe(profile(), selected_tickers())
+        scarce = scarce_goals(pipeline)
+        if not scarce:
+            return None
+        goals_text = " and ".join(scarce) if len(scarce) <= 2 else ", ".join(scarce)
+        verb = "has" if len(scarce) == 1 else "have"
+        noun = "this goal" if len(scarce) == 1 else "these goals"
+        return ui.div(
+            ui.markdown(
+                f"**Note:** {goals_text} {verb} limited support in the current "
+                "investment universe — no single asset (and so no achievable "
+                f"portfolio) scores highly on {noun}, regardless of tilt. A "
+                "low power here reflects a data limitation, not an optimizer "
+                "failure."
+            ),
+            class_="alert alert-warning",
         )
 
     @render_widget
