@@ -146,15 +146,22 @@ def run_strategic(
     pipeline: PipelineOutput,
     mode: str = "balanced",
     tilt_goal: str = "Growth",
+    tilt_strength: float = 1.0,
 ) -> OptimizationResult:
-    """Step 5 on a decomposed universe (Sec 3.5)."""
+    """Step 5 on a decomposed universe (Sec 3.5). ``tilt_strength`` in [0, 1]
+    interpolates between Balanced (0.0) and a maximal tilt (1.0), per the
+    paper's own partial-tilt example (Golts & Jones 2023, p.12)."""
     optimizer = StrategicOptimizer()
     if mode == "balanced":
         return optimizer.solve_balanced(
             pipeline.tickers, pipeline.exp_returns, pipeline.shares_by_ticker
         )
     return optimizer.solve_tilted(
-        pipeline.tickers, pipeline.exp_returns, pipeline.shares_by_ticker, tilt_goal
+        pipeline.tickers,
+        pipeline.exp_returns,
+        pipeline.shares_by_ticker,
+        tilt_goal,
+        tilt_strength=tilt_strength,
     )
 
 
