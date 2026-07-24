@@ -111,6 +111,8 @@ _EXPECTED_SVG_FILES: dict[str, str] = {
     "optimalportfolios_performance": "chart_optimalportfolios_optimization_comparison_portfolio_performance.svg",
     "simulation_fan_chart": "chart_simulation_portfolio_value_fan_chart.svg",
     "simulation_histogram": "chart_simulation_terminal_value_distribution.svg",
+    "goal_parity_weights": "chart_goal_parity_weights.svg",
+    "goal_parity_goal_powers": "chart_goal_parity_goal_powers.svg",
 }
 
 # ---------------------------------------------------------------------------

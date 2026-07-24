@@ -618,7 +618,7 @@ dependencies = [
 	#	"polars-features",  # Time-series machine learning at scale.
 	"polars-genson",	# A Polars plugin for JSON schema inference using genson-rs.
 	"polars-grouper",  # High-performance graph analysis and pattern mining extension for Polars
-	"polars-holidays",	# A polars plugin for determining if a date is a holiday
+	#	"polars-holidays",	# A polars plugin for determining if a date is a holiday PULLS IN polars-lts-cpu WHICH CONFLICTS WITH polars (both install into the same polars/ namespace)
 	#	"polars-interval-match",  # A Python extension module for matching intervals in Polars DataFrames
 	#	"polars-list-utils",  # Utilities for working with List columns in Polars
 	"polars-lprof",  # Read line profiler reports into Polars DataFrames
@@ -1336,10 +1336,15 @@ addopts = [
     "-p", "no:better_coverage",
     "-p", "pytest_cov",
     "-p", "no:randomly",
-    "-p", "no:json-report",
+    "-p", "no:pytest_jsonreport",
     "-p", "no:allure_pytest",
+    "-p", "no:pytest_glamor_allure",
+    "-p", "no:pl-snapshot",
     "-p", "no:langsmith",
-    "-p", "no:pytest_playwright",
+    "-p", "no:playwright",
+    "-p", "no:pytest_playwright_enhanced",
+    "-p", "no:pytest_html_plus",
+    "-p", "no:robotframework",
     "--import-mode=importlib",
     "-m", "not playwright",
     "--ignore=tests/tests_shiny/dashboard/test_app_playwright.py",

@@ -1,0 +1,181 @@
+"""Unit tests for the data layer, asset map, and calibration utilities."""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+from scipy import stats as sp_stats
+
+from src.models.goal_parity import AssetUniverse, CalibrationSuite, GoalDecomposer
+from src.models.goal_parity._goalparity_asset_map import asset_map_coordinates
+from src.models.goal_parity._goalparity_data import (
+    SKEW_CLIP,
+    _ewma_annualized_volatility,
+    _winsorized_expanding_skew,
+    find_cleaned_data_dir,
+)
+
+
+class Test_Asset_Universe:
+    """Integration-light checks against the real cleaned_data folder."""
+
+    @pytest.fixture(scope="class")
+    def universe(self) -> AssetUniverse:
+        try:
+            return AssetUniverse.load()
+        except FileNotFoundError:
+            pytest.skip("cleaned_data folder not present in this checkout")
+
+    def test_loads_all_investable_assets(self, universe: AssetUniverse) -> None:
+        assert len(universe.tickers) >= 15
+        assert "BIL" in universe.tickers
+        assert "VIX" not in universe.tickers  # index is context, not investable
+
+    def test_stats_are_finite_and_annualized(self, universe: AssetUniverse) -> None:
+        for stats in universe.all_stats():
+            assert np.isfinite(stats.a) and np.isfinite(stats.sigma) and np.isfinite(stats.gamma)
+            assert 0.0 < stats.sigma < 2.0
+
+    def test_risk_free_rate_plausible(self, universe: AssetUniverse) -> None:
+        assert -0.02 < universe.risk_free_rate() < 0.15
+
+    def test_common_start_date_is_latest_inception(self, universe: AssetUniverse) -> None:
+        start = universe.common_start_date()
+        assert all(frame["Date"].min() <= start for frame in universe.frames.values())
+
+    def test_aligned_returns_share_dates(self, universe: AssetUniverse) -> None:
+        aligned = universe.aligned_returns(["BIL", "AGG"])
+        assert aligned.columns == ["Date", "BIL", "AGG"]
+        assert aligned.height > 100
+
+    def test_cash_tickers_are_rates_class(self, universe: AssetUniverse) -> None:
+        assert set(universe.cash_tickers()) == {"BIL", "SHV"}
+
+    def test_find_cleaned_data_dir_resolves(self) -> None:
+        assert find_cleaned_data_dir().name == "cleaned_data"
+
+
+class Test_Ewma_Volatility_And_Winsorized_Skew:
+    """Golts & Jones (2023), Appendix "Data and Methodology": EWMA vol over a
+    trailing window, skew on returns Winsorized at +/-1 sigma over an
+    expanding window, itself clipped to +/-1."""
+
+    def test_ewma_volatility_recency_tilted_vs_equal_weighted(self) -> None:
+        """A regime shift (low-vol history, high-vol recent) should pull the
+        EWMA estimate toward the recent regime more than a flat average."""
+        rng = np.random.default_rng(5)
+        old_regime = rng.normal(0, 0.001, 1000)
+        recent_regime = rng.normal(0, 0.05, 500)
+        returns = np.concatenate([old_regime, recent_regime])
+        equal_weighted = float(np.std(returns, ddof=1))
+        ewma = _ewma_annualized_volatility(returns) / np.sqrt(252)
+        assert ewma > equal_weighted
+
+    def test_winsorized_skew_is_clipped_to_bounds(self) -> None:
+        rng = np.random.default_rng(5)
+        # A single extreme outlier would otherwise dominate the raw skew.
+        returns = np.concatenate([rng.normal(0, 0.01, 999), [5.0]])
+        gamma = _winsorized_expanding_skew(returns)
+        assert -SKEW_CLIP <= gamma <= SKEW_CLIP
+
+    def test_winsorized_skew_dampens_outlier_influence(self) -> None:
+        """Winsorizing at +/-1 sigma before computing skew, then clipping the
+        result to +/-1, should pull a single extreme outlier's effect in by
+        an order of magnitude versus the raw (unwinsorized) skew."""
+        rng = np.random.default_rng(5)
+        base = rng.normal(0, 0.01, 999)
+        with_outlier = np.concatenate([base, [5.0]])
+        raw_gamma = sp_stats.skew(with_outlier, bias=False)
+        winsorized_gamma = _winsorized_expanding_skew(with_outlier)
+        assert abs(winsorized_gamma) < abs(raw_gamma) / 10
+
+    def test_zero_variance_series_returns_zero_skew(self) -> None:
+        assert _winsorized_expanding_skew(np.zeros(100)) == 0.0
+
+
+class Test_Asset_Map:
+    """Confirmed against Golts & Jones (2023), Appendix B: x=Pi_L, y=Pi_D."""
+
+    def test_cash_plots_at_origin(self) -> None:
+        shares = GoalDecomposer().decompose(
+            "CASH", epv=1.0, sigma_d=0.001, sigma_l=0.001, T=20, tau_years=0.5, b=0.85
+        )
+        assert asset_map_coordinates(shares) == pytest.approx((0.0, 0.0), abs=0.02)
+
+    def test_axes_match_appendix_b_exactly(self) -> None:
+        """x = Pi_liquidity, y = Pi_default (not a share-weighted combination)."""
+        shares = GoalDecomposer().decompose(
+            "MID", epv=2.0, sigma_d=0.12, sigma_l=0.18, T=15, tau_years=0.5, b=0.80
+        )
+        x, y = asset_map_coordinates(shares)
+        assert x == pytest.approx(shares.pi_liquidity)
+        assert y == pytest.approx(shares.pi_default)
+
+    def test_high_liquitility_low_defaultility_is_preservation_corner(self) -> None:
+        """Pi_L high, Pi_D low -> (x, y) near (1, 0), the Preservation corner."""
+        shares = GoalDecomposer().decompose(
+            "PRES", epv=1.0, sigma_d=0.001, sigma_l=0.5, T=30, tau_years=0.5, b=0.97
+        )
+        x, y = asset_map_coordinates(shares)
+        assert x > 0.9
+        assert y < 0.1
+
+    def test_coordinates_bounded(self) -> None:
+        shares = GoalDecomposer().decompose(
+            "EQTY", epv=2.0, sigma_d=0.3, sigma_l=0.3, T=25, tau_years=0.5, b=0.9
+        )
+        x, y = asset_map_coordinates(shares)
+        assert 0.0 <= x <= 1.0 and 0.0 <= y <= 1.0
+
+
+class Test_Calibration:
+    def test_gaussian_tail_fraction_small(self) -> None:
+        rng = np.random.default_rng(5)
+        fraction = CalibrationSuite.tail_variance_fraction(rng.normal(0, 0.01, 5000))
+        assert 0.0 < fraction < 0.35
+
+    def test_fit_gamma0_floors_at_one(self) -> None:
+        rng = np.random.default_rng(5)
+        heavy = rng.standard_t(df=2, size=5000) * 0.01
+        assert CalibrationSuite.fit_gamma0(heavy) >= 1.0
+
+    def test_default_recovered_at_quarter_tail(self) -> None:
+        # tail fraction 0.25 -> gamma0 = 2.0 (close to the paper's own 1.6)
+        class _Fake(CalibrationSuite):
+            @staticmethod
+            def tail_variance_fraction(returns, z=2.0):
+                return 0.25
+
+        assert _Fake.fit_gamma0(np.zeros(100)) == pytest.approx(2.0)
+
+    def test_fit_gamma0_for_universe_pools_all_assets(self) -> None:
+        rng = np.random.default_rng(5)
+        returns_by_ticker = {
+            "A": rng.normal(0, 0.01, 500),
+            "B": rng.standard_t(df=3, size=500) * 0.01,
+        }
+        gamma0 = CalibrationSuite.fit_gamma0_for_universe(returns_by_ticker)
+        assert gamma0 >= 1.0
+
+    def test_fit_gamma0_for_universe_is_scale_invariant(self) -> None:
+        """A single huge-volatility asset must not dominate the pooled fit
+        purely by scale: standardizing per-asset before pooling means a mix
+        of a low-vol and a high-vol asset with similarly-shaped (Gaussian)
+        tails should NOT collapse to the gamma0=1.0 floor."""
+        rng = np.random.default_rng(5)
+        returns_by_ticker = {
+            "low_vol": rng.normal(0, 0.001, 2000),  # e.g. T-bill-like
+            "high_vol": rng.normal(0, 0.5, 2000),  # e.g. VIX-futures-like, same shape
+        }
+        gamma0 = CalibrationSuite.fit_gamma0_for_universe(returns_by_ticker)
+        assert gamma0 > 1.2  # near the pure-Gaussian gamma0 (~1.94), not floored
+
+    def test_walk_forward_produces_folds(self) -> None:
+        data = np.arange(100.0)
+        folds = CalibrationSuite.walk_forward(data, lambda tr, te: float(te.mean()), n_folds=4)
+        assert len(folds) == 4
+        assert folds[0].train.size < folds[-1].train.size
+
+    def test_walk_forward_rejects_tiny_samples(self) -> None:
+        with pytest.raises(ValueError):
+            CalibrationSuite.walk_forward(np.arange(5.0), lambda tr, te: 0.0, n_folds=4)
