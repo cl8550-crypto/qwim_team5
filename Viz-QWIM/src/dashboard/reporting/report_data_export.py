@@ -39,12 +39,14 @@ from src.dashboard.reporting._report_data_export_exports import (
     export_client_info_impl_QWIM,
     export_data_clients_json_impl_QWIM,
     export_data_results_json_impl_QWIM,
+    export_inputs_goal_parity_impl_QWIM,
     export_inputs_optimalportfolios_optimization_impl_QWIM,
     export_inputs_portfolio_analysis_impl_QWIM,
     export_inputs_portfolio_comparison_impl_QWIM,
     export_inputs_simulation_impl_QWIM,
     export_inputs_skfolio_optimization_impl_QWIM,
     export_inputs_weights_analysis_impl_QWIM,
+    export_outputs_goal_parity_impl_QWIM,
     export_outputs_optimalportfolios_optimization_impl_QWIM,
     export_outputs_portfolio_analysis_impl_QWIM,
     export_outputs_portfolio_comparison_impl_QWIM,
@@ -788,6 +790,23 @@ def export_outputs_simulation(
     *, reactives_shiny: dict | None) -> Path:
     """Export Simulation outputs to JSON."""
     return export_outputs_simulation_impl_QWIM(reactives_shiny = reactives_shiny)
+
+
+# =========================================================================
+# 7.  GOAL PARITY — inputs & outputs
+# =========================================================================
+
+
+def export_inputs_goal_parity(
+    *, reactives_shiny: dict | None) -> Path:
+    """Export Goal Parity investor-profile inputs to JSON."""
+    return export_inputs_goal_parity_impl_QWIM(reactives_shiny = reactives_shiny)
+
+
+def export_outputs_goal_parity(
+    *, reactives_shiny: dict | None) -> Path:
+    """Export Goal Parity strategic/rebalancing outputs to JSON."""
+    return export_outputs_goal_parity_impl_QWIM(reactives_shiny = reactives_shiny)
 
 
 # =========================================================================
