@@ -247,6 +247,10 @@ from src.dashboard.shiny_tab_results.tab_results import (
     tab_results_server,
     tab_results_ui,
 )
+from src.dashboard.shiny_tab_covariance.tab_covariance import (
+    tab_covariance_server,
+    tab_covariance_ui,
+)
 from src.dashboard.shiny_tab_setup.tab_setup import (
     tab_setup_server,
     tab_setup_ui,
@@ -534,6 +538,14 @@ def create_app_ui() -> Any:
         ),
         # Navigation spacer to push subsequent elements to the right
         # Creates proper visual separation between main content and utility buttons
+        ui.nav_panel(
+            "Covariance",
+            tab_covariance_ui(
+                "ID_tab_covariance",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
         ui.nav_spacer(),
         # About button in navigation bar for application information
         # Provides users with help, features overview, and version details
@@ -744,6 +756,12 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
         reactives_shiny=reactives_shiny,
     )  # Reads Clients-tab inputs for investor profiling
 
+    tab_covariance_server(
+        id="ID_tab_covariance",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
 
 def app_factory() -> App:
     """Create a fresh Shiny application instance from the module UI and server."""
