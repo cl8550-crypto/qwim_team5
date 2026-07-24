@@ -1,4 +1,14 @@
-"""Covariance dashboard tab."""
+"""Covariance dashboard tab.
+
+The covariance workflow is divided into three client-facing subtabs:
+
+1. Overview — executive recommendation and analysis summary.
+2. Estimator Comparison — detailed rankings and performance metrics.
+3. Diagnostics — rolling behavior and covariance-matrix reliability checks.
+
+The covariance backtest is initiated in the Overview subtab and its reactive
+results are shared with the Comparison and Diagnostics subtabs.
+"""
 
 from __future__ import annotations
 
@@ -8,9 +18,17 @@ from typing import Any
 
 from shiny import module, ui
 
-from .subtab_covariance_analysis import (
-    subtab_covariance_analysis_server,
-    subtab_covariance_analysis_ui,
+from .subtab_covariance_comparison import (
+    subtab_covariance_comparison_server,
+    subtab_covariance_comparison_ui,
+)
+from .subtab_covariance_diagnostics import (
+    subtab_covariance_diagnostics_server,
+    subtab_covariance_diagnostics_ui,
+)
+from .subtab_covariance_overview import (
+    subtab_covariance_overview_server,
+    subtab_covariance_overview_ui,
 )
 
 
@@ -20,17 +38,37 @@ def tab_covariance_ui(
     data_utils: dict[str, Any],
     data_inputs: dict[str, Any],
 ) -> Any:
-    """Create the covariance model tab."""
+    """Create the three-subtab covariance workflow."""
 
-    return ui.navset_tab(
+    tab_panels = [
         ui.nav_panel(
-            "Estimator Analysis",
-            subtab_covariance_analysis_ui(
-                id="ID_tab_covariance_subtab_analysis",
+            "Overview",
+            subtab_covariance_overview_ui(
+                id="ID_tab_covariance_subtab_overview",
                 data_utils=data_utils,
                 data_inputs=data_inputs,
             ),
         ),
+        ui.nav_panel(
+            "Estimator Comparison",
+            subtab_covariance_comparison_ui(
+                id="ID_tab_covariance_subtab_comparison",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
+        ui.nav_panel(
+            "Diagnostics",
+            subtab_covariance_diagnostics_ui(
+                id="ID_tab_covariance_subtab_diagnostics",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
+    ]
+
+    return ui.navset_tab(
+        *tab_panels,
         id="ID_tab_covariance_tabs_all",
     )
 
@@ -44,16 +82,36 @@ def tab_covariance_server(
     data_inputs: dict[str, Any],
     reactives_shiny: dict[str, Any],
 ) -> dict[str, Any]:
-    """Run covariance-tab server logic."""
+    """Coordinate the covariance subtabs and shared results."""
 
-    analysis_server = subtab_covariance_analysis_server(
-        id="ID_tab_covariance_subtab_analysis",
+    overview = subtab_covariance_overview_server(
+        id="ID_tab_covariance_subtab_overview",
         data_utils=data_utils,
         data_inputs=data_inputs,
         reactives_shiny=reactives_shiny,
     )
 
-    return {"Covariance_Analysis_Server": analysis_server}
+    comparison = subtab_covariance_comparison_server(
+        id="ID_tab_covariance_subtab_comparison",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+        overview=overview,
+    )
+
+    diagnostics = subtab_covariance_diagnostics_server(
+        id="ID_tab_covariance_subtab_diagnostics",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+        overview=overview,
+    )
+
+    return {
+        "Overview_Server": overview,
+        "Comparison_Server": comparison,
+        "Diagnostics_Server": diagnostics,
+    }
 
 
 Tab_Covariance = tab_covariance_ui
