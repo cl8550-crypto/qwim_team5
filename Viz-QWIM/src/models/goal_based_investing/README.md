@@ -24,3 +24,22 @@ assessment = goal.assess(annual_return=0.05)
 
 The model is deliberately a planning baseline: it does not optimise asset
 weights, infer returns, model taxes, or rebalance a portfolio.
+
+## Research core: multistage goal postponement
+
+`model_goal_postponement.py` implements the small-tree, exact multistage
+stochastic mixed-integer program in Bae et al. (2024). At every scenario-tree
+node it rebalances a long-only portfolio after returns are observed, pays
+selected all-or-nothing goals, and maximises expected goal utility. A
+postponable goal can be completed only once on a path; its cost inflation and
+utility time preference are both measured from a fixed reference stage.
+
+`scenario_tree_goal_based_investing.py` turns the cleaned daily data into
+monthly simple returns and makes a historical-bootstrap tree. The Version 1
+investable universe is normally `BIL, XLK, XLP, AGG, TIP, GLD`. VIX and CPI
+are regime/calibration features, not investable tree returns. CPI is lagged by
+one month to avoid a simple release-timing look-ahead error.
+
+The exact model is intentionally for short, low-branching trees: five return
+periods and two branches yields 63 nodes. Larger dashboard cases need explicit
+scenario reduction or SDDiP, not an oversized deterministic-equivalent solve.
