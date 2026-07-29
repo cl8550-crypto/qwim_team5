@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // QWIM Portfolio Analysis Report  Typst Template
 //
 // Data sources (all relative to this file's directory):
@@ -57,6 +57,9 @@
 
 #let in_gp  = results.at("Goal_Parity_Inputs",                     default: (:))
 #let out_gp = results.at("Goal_Parity_Outputs",                    default: (:))
+
+#let in_cov  = results.at("Covariance_Inputs",                     default: (:))
+#let out_cov = results.at("Covariance_Outputs",                    default: (:))
 
 // ---- Defensive helpers ----------------------------------------------------
 // safe_merge: merge *actual* (from JSON) into *defaults* — avoids the
@@ -147,7 +150,22 @@
     rebalancing: guarded_rebalancing,
   )
 }
+// Guard covariance-estimation outputs
+#let out_cov = {
+  let base = if type(out_cov) == dictionary { out_cov } else { (:) }
 
+  base + (
+    analysis_success: base.at("analysis_success", default: false),
+    best_estimator: base.at("best_estimator", default: "N/A"),
+    best_relative_frobenius_loss:
+      base.at("best_relative_frobenius_loss", default: 0.0),
+    number_of_windows: base.at("number_of_windows", default: 0),
+    ranked_estimators:
+      safe_array(base.at("ranked_estimators", default: ())),
+    diagnostics:
+      safe_array(base.at("diagnostics", default: ())),
+  )
+}
 // Guard out_sk.performance_summary
 #let _default_sk_method = (label: "N/A", annualized_return: 0.0, volatility: 0.0, sharpe_ratio: 0.0)
 #let out_sk = {
@@ -1441,7 +1459,196 @@ investing for and how comfortable you are with ups and downs along the way.
 ]
 ] // end include_goal_parity
 
+
 #pagebreak()
+
+// ============================================================================
+// COVARIANCE ESTIMATION ANALYSIS
+// ============================================================================
+
+#if config.at("include_covariance", default: true) [
+= Covariance Estimation Analysis
+
+#section_rule()
+
+Covariance estimation determines how the portfolio model measures relationships
+between asset returns. Because the true covariance matrix is unknown, different
+estimators may produce meaningfully different risk forecasts. This analysis compares
+the estimators using rolling out-of-sample data.
+
+#if not out_cov.analysis_success [
+#note_box[
+  *Covariance analysis was unavailable.* The report could not complete the
+  covariance-estimation backtest. Review the input dataset and model settings,
+  then regenerate the report.
+]
+] else [
+
+== Backtest Configuration
+
+#info_box[
+  *Data source:* #field(in_cov, "data_source") |
+  *Training window:* #field(in_cov, "train_window") trading days |
+  *Testing window:* #field(in_cov, "test_window") trading days |
+  *Step size:* #field(in_cov, "step_size") trading days
+]
+
+#v(0.6em)
+
+#styled_table(
+  columns: (auto, 1fr),
+  table.header(
+    text(fill: white, weight: "bold")[Parameter],
+    text(fill: white, weight: "bold")[Value],
+  ),
+  [Estimators compared],
+    [#safe_array(in_cov.at("estimators", default: ())).join(", ")],
+  [Rolling windows completed],
+    [#out_cov.number_of_windows],
+  [Selection metric],
+    [Average Relative Frobenius Loss],
+)
+
+== Recommended Estimator
+
+#grid(
+  columns: (1fr, 1fr, 1fr),
+  gutter: 0.8em,
+  kpi_card(
+    "Best Estimator",
+    out_cov.best_estimator,
+    sub: "Lowest average loss",
+    accent: rgb("#0f766e"),
+  ),
+  kpi_card(
+    "Relative Frobenius Loss",
+    str(calc.round(out_cov.best_relative_frobenius_loss, digits: 4)),
+    sub: "Lower is better",
+  ),
+  kpi_card(
+    "Backtest Windows",
+    str(out_cov.number_of_windows),
+    sub: "Out-of-sample periods",
+  ),
+)
+
+#v(0.7em)
+
+#note_box[
+  *Interpretation:* The recommended estimator produced the lowest average
+  relative Frobenius loss across the rolling backtest. Lower loss indicates
+  that the estimated covariance matrix was closer to the covariance matrix
+  subsequently observed out of sample.
+]
+
+== Estimator Comparison
+
+#styled_table_teal(
+  columns: (0.7fr, 2fr, 1.4fr, 1.4fr, 1.2fr),
+  table.header(
+    text(fill: white, weight: "bold")[Rank],
+    text(fill: white, weight: "bold")[Estimator],
+    text(fill: white, weight: "bold")[Avg. Relative Loss],
+    text(fill: white, weight: "bold")[Avg. Condition No.],
+    text(fill: white, weight: "bold")[Windows],
+  ),
+  ..{
+    let data = out_cov.ranked_estimators
+    let rows = ()
+
+    if data.len() == 0 {
+      rows.push(
+        table.cell(colspan: 5)[_No covariance-estimator results available_]
+      )
+    } else {
+      for row in data {
+        rows.push([#row.at("rank", default: "N/A")])
+        rows.push([#row.at("estimator", default: "N/A")])
+        rows.push([
+          #str(calc.round(
+            row.at("average_relative_frobenius_loss", default: 0.0),
+            digits: 4,
+          ))
+        ])
+        rows.push([
+          #str(calc.round(
+            row.at("average_condition_number", default: 0.0),
+            digits: 2,
+          ))
+        ])
+        rows.push([#row.at("number_of_windows", default: 0)])
+      }
+    }
+
+    rows
+  }
+)
+#figure(
+  image(
+     "outputs_images/chart_covariance_loss.svg",
+      width: 90%,),
+
+  caption: [Average Relative Frobenius Loss by Estimator],
+
+)
+
+== Numerical Stability Diagnostics
+
+#styled_table(
+  columns: (2fr, 1.2fr, 1.4fr, 1.4fr),
+  table.header(
+    text(fill: white, weight: "bold")[Estimator],
+    text(fill: white, weight: "bold")[Loss Volatility],
+    text(fill: white, weight: "bold")[Median Condition No.],
+    text(fill: white, weight: "bold")[Non-positive Eigenvalue Windows],
+  ),
+  ..{
+    let data = out_cov.diagnostics
+    let rows = ()
+
+    if data.len() == 0 {
+      rows.push(
+        table.cell(colspan: 4)[_No covariance diagnostics available_]
+      )
+    } else {
+      for row in data {
+        rows.push([#row.at("estimator", default: "N/A")])
+        rows.push([
+          #str(calc.round(
+            row.at("loss_volatility", default: 0.0),
+            digits: 4,
+          ))
+        ])
+        rows.push([
+          #str(calc.round(
+            row.at("median_condition_number", default: 0.0),
+            digits: 2,
+          ))
+        ])
+        rows.push([
+          #row.at("non_positive_eigenvalue_windows", default: 0)
+        ])
+      }
+    }
+
+    rows
+  }
+)
+#figure(
+  image(
+    "outputs_images/chart_covariance_condition_number.svg",
+    width: 90%,
+  ),
+  caption: [Average Condition Number by Estimator],
+)
+#note_box[
+  *Stability guidance:* A very large condition number indicates that a covariance
+  matrix may be numerically unstable. Non-positive minimum eigenvalues can also
+  indicate that a matrix is not positive definite, which may cause difficulties
+  in portfolio optimisation.
+]
+]
+] // end include_covariance
 
 // ============================================================================
 // SECTION 4  EXECUTIVE SUMMARY
@@ -1519,6 +1726,9 @@ investing for and how comfortable you are with ups and downs along the way.
   [*Withdrawal rate:* Validate 4 % assumption given current Sharpe of
    #fmt_ratio(out_pc.metrics.sharpe_ratio.portfolio).],
 )
+
+#pagebreak()
+
 
 // ============================================================================
 // SECTION 5 — DISCLOSURES

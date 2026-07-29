@@ -66,6 +66,14 @@ from ._report_plot_goal_parity import (
     export_plot_goal_parity_goal_powers,
     export_plot_goal_parity_weights,
 )
+from src.dashboard.reporting._report_plot_covariance import (
+    export_plot_covariance_condition_number,
+    export_plot_covariance_loss,
+)
+from src.dashboard.reporting._report_data_export_covariance import (
+    export_inputs_covariance_impl_QWIM,
+    export_outputs_covariance_impl_QWIM,
+)
 
 _logger = get_logger(name = __name__)
 
@@ -102,7 +110,9 @@ def export_all_report_plots(
     paths["simulation_histogram"] = export_plot_simulation_histogram(reactives_shiny = reactives_shiny)
     paths["goal_parity_weights"] = export_plot_goal_parity_weights(reactives_shiny = reactives_shiny)
     paths["goal_parity_goal_powers"] = export_plot_goal_parity_goal_powers(reactives_shiny = reactives_shiny)
-
+    paths["covariance_loss"] = export_plot_covariance_loss(reactives_shiny=reactives_shiny,)
+    paths["covariance_condition_number"] = (export_plot_covariance_condition_number(reactives_shiny=reactives_shiny,)
+    )
     generated = sum(1 for v in paths.values() if v is not None)
     _logger.info("Generated %d / %d SVG images", generated, len(paths))
 

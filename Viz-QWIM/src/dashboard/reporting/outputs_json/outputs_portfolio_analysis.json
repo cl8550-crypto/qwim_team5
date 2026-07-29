@@ -1,0 +1,46 @@
+{
+  "basic_statistics": [
+    {
+      "metric": "Mean Daily Return",
+      "portfolio": "0.0329%",
+      "benchmark": "0.0722%"
+    },
+    {
+      "metric": "Std Dev Daily Return",
+      "portfolio": "0.6514%",
+      "benchmark": "2.9130%"
+    },
+    {
+      "metric": "Skewness",
+      "portfolio": "-0.9425",
+      "benchmark": "0.0667"
+    },
+    {
+      "metric": "Excess Kurtosis",
+      "portfolio": "16.8447",
+      "benchmark": "1.0028"
+    }
+  ],
+  "performance_metrics": [
+    {
+      "metric": "Annualised Return",
+      "value": "8.06%"
+    },
+    {
+      "metric": "Annualised Volatility",
+      "value": "10.34%"
+    },
+    {
+      "metric": "Sharpe Ratio (2 % Rf)",
+      "value": "0.6088"
+    },
+    {
+      "metric": "Maximum Drawdown",
+      "value": "-25.16%"
+    },
+    {
+      "metric": "Analysis Period (yrs)",
+      "value": "14.4"
+    }
+  ]
+}
