@@ -1,0 +1,8 @@
+{
+  "strategic_horizon_years": 5.0,
+  "rebalancing_frequency_months": 6,
+  "risk_profile": "Moderate",
+  "risk_aversion_eta": 20,
+  "loss_barrier_b": 0.8541314966877566,
+  "loss_tolerance": 0.14586850331224344
+}

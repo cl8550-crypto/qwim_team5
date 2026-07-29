@@ -1,0 +1,12 @@
+{
+  "train_window": 252,
+  "test_window": 21,
+  "step_size": 21,
+  "data_source": "data_ETFs.csv",
+  "estimators": [
+    "Empirical",
+    "Ledoit-Wolf",
+    "Oracle Approximating Shrinkage",
+    "Exponentially Weighted"
+  ]
+}
