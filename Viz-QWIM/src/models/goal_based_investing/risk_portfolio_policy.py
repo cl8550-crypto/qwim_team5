@@ -69,9 +69,19 @@ PREDEFINED_POLICY_VERSION = "cvar-v1-2026-07"
 
 
 def normalize_risk_profile(label: str) -> str:
-    """Validate a risk-tolerance label from the client-data contract."""
+    """Normalize a displayed label or the Clients dashboard select value."""
     cleaned = " ".join(str(label).strip().split())
     profiles = {band.profile for band in DEFAULT_RISK_PROFILE_BANDS}
+    dashboard_values = {
+        band.profile.lower().replace(" ", "_"): band.profile
+        for band in DEFAULT_RISK_PROFILE_BANDS
+    }
+    if cleaned in profiles:
+        return cleaned
+    if cleaned in dashboard_values:
+        return dashboard_values[cleaned]
+    if cleaned.lower() in dashboard_values:
+        return dashboard_values[cleaned.lower()]
     if cleaned not in profiles:
         raise ValueError(f"Unknown risk profile {label!r}; expected one of {sorted(profiles)}")
     return cleaned

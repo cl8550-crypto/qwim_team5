@@ -44,6 +44,8 @@ def test_build_cvar_policies_respects_each_profile_equity_band(monthly_returns: 
 def test_risk_profile_normalization_accepts_client_contract_labels_only() -> None:
     assert normalize_risk_profile("Moderate Conservative") == "Moderate Conservative"
     assert normalize_risk_profile(" Moderate ") == "Moderate"
+    assert normalize_risk_profile("moderate") == "Moderate"
+    assert normalize_risk_profile("moderate_conservative") == "Moderate Conservative"
     with pytest.raises(ValueError, match="Unknown risk profile"):
         normalize_risk_profile("Moderately Aggressive")
 
