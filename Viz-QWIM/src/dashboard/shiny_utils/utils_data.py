@@ -87,8 +87,9 @@ def get_data_inputs(*, project_dir: Any) -> Any:
     """Load data (with error handling) from files in subfolders of folder "inputs"."""
     input_data_raw = get_input_data_raw(project_dir=project_dir)
     input_data_processed = get_input_data_processed(project_dir=project_dir)
+    input_data_goals = get_goal_based_investing_results(project_dir=project_dir)  # <-- add this line
 
-    return {**input_data_raw, **input_data_processed}
+    return {**input_data_raw, **input_data_processed, **input_data_goals}  # <-- add input_data_goals
 
 
 def get_input_data_raw(*, project_dir: Path) -> dict[str, pl.DataFrame]:
@@ -365,6 +366,42 @@ def get_input_data_processed(*, project_dir: Any) -> Any:
 
     return input_data
 
+def get_goal_based_investing_results(*, project_dir: Any) -> dict[str, Any]:
+    """Load precomputed MSGP goal plans from inputs/processed/goal_based_investing/."""
+    import pickle
+
+    results_dir = project_dir / "inputs" / "processed" / "goal_based_investing"
+    output: dict[str, Any] = {
+        "Goal_Based_Investing_Results": {},
+        "Goal_Based_Investing_Benchmarks": {},
+    }
+
+    if not results_dir.exists():
+        _logger.warning(
+            "Goal-based investing results directory not found.",
+            extra={"expected_path": str(results_dir)},
+        )
+        return output
+
+    results: dict[str, Any] = {}
+    for pkl_path in sorted(results_dir.glob("*.pkl")):
+        label = pkl_path.stem.replace("_", " ").title()
+        try:
+            with pkl_path.open("rb") as f:
+                results[label] = pickle.load(f)
+            _logger.debug("Loaded goal-based investing plan", extra={"label": label})
+        except Exception as read_exc:
+            _logger.warning(
+                "Failed to load goal-based investing result: %s. Error: %s",
+                pkl_path, read_exc,
+            )
+
+    output["Goal_Based_Investing_Results"] = results
+    _logger.info(
+        "Goal-based investing results loaded",
+        extra={"n_plans": len(results)},
+    )
+    return output
 
 def get_names_time_series_from_DF(*, polars_DF: Any) -> Any:
     """Extract series names from a polars DataFrame polars_DF."""
