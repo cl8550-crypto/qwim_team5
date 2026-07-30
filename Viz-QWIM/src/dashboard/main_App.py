@@ -243,6 +243,10 @@ from src.dashboard.shiny_tab_setup.tab_setup import (
     tab_setup_server,
     tab_setup_ui,
 )
+from src.dashboard.shiny_tab_goals.tab_goals import (
+    tab_goals_server,
+    tab_goals_ui,
+)
 
 
 _logger.debug("Dashboard components imported successfully")
@@ -489,6 +493,15 @@ def create_app_ui() -> Any:
                 data_inputs=data_inputs,
             ),  # Input datasets for analysis
         ),
+        # 2. In create_app_ui(), after the Portfolios nav_panel:
+        ui.nav_panel(
+            "Goal-Based Investing",
+            tab_goals_ui(
+                "ID_tab_goals",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
         # Products tab (annuities, insurance, etc.)
         ui.nav_panel(
             "Products",
@@ -703,6 +716,13 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
         data_inputs=data_inputs,  # Input datasets for results
         reactives_shiny=reactives_shiny,
     )  # Centralized reactive state for coordination
+
+    tab_goals_server(
+        id="ID_tab_goals",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
 
 
 def app_factory() -> App:

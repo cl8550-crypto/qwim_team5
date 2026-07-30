@@ -258,7 +258,7 @@ def tab_goals_server(  # pragma: no cover
         result = selected_result()
         if result is None:
             return "n/a"
-        from src.models.goal_based_investing.performance import terminal_wealth_stats
+        from src.models.personalized_goal_based_investing.performance import terminal_wealth_stats
 
         wealth, probs = result.terminal_wealth_distribution()
         stats = terminal_wealth_stats(wealth, probs)
@@ -269,7 +269,7 @@ def tab_goals_server(  # pragma: no cover
         result = selected_result()
         if result is None:
             return "n/a"
-        from src.models.goal_based_investing.performance import terminal_wealth_stats
+        from src.models.personalized_goal_based_investing.performance import terminal_wealth_stats
 
         wealth, probs = result.terminal_wealth_distribution()
         stats = terminal_wealth_stats(wealth, probs)
@@ -280,7 +280,7 @@ def tab_goals_server(  # pragma: no cover
         result = selected_result()
         if result is None:
             return "n/a"
-        from src.models.goal_based_investing.performance import goal_success_probability
+        from src.models.personalized_goal_based_investing.performance import goal_success_probability
 
         top_priority = min(result.goal_set.priority_levels)
         top_goal = result.goal_set.goals_at_level(top_priority)[0]
@@ -324,7 +324,7 @@ def tab_goals_server(  # pragma: no cover
         result = selected_result()
         if result is None:
             return None
-        from src.models.goal_based_investing.visualization import plot_allocation_over_time
+        from src.models.personalized_goal_based_investing.visualization import plot_allocation_over_time
 
         return plot_allocation_over_time(result)
 
@@ -337,7 +337,7 @@ def tab_goals_server(  # pragma: no cover
         cov = getattr(result, "stage0_covariance", None)
         if mu is None or cov is None:
             return None  # graceful: frontier needs mu/cov, not always attached to a result
-        from src.models.goal_based_investing.visualization import plot_efficient_frontier
+        from src.models.personalized_goal_based_investing.visualization import plot_efficient_frontier
 
         stage0_x = result.final.x[result.tree.root_id]
         return plot_efficient_frontier(
@@ -351,7 +351,7 @@ def tab_goals_server(  # pragma: no cover
         result = selected_result()
         if result is None:
             return None
-        from src.models.goal_based_investing.visualization import plot_goal_probabilities
+        from src.models.personalized_goal_based_investing.visualization import plot_goal_probabilities
 
         return plot_goal_probabilities(result, result.goal_set)
 
@@ -362,7 +362,7 @@ def tab_goals_server(  # pragma: no cover
         result = selected_result()
         if result is None:
             return None
-        from src.models.goal_based_investing.visualization import plot_terminal_wealth_distribution
+        from src.models.personalized_goal_based_investing.visualization import plot_terminal_wealth_distribution
 
         return plot_terminal_wealth_distribution(result)
 
@@ -371,7 +371,7 @@ def tab_goals_server(  # pragma: no cover
         result = selected_result()
         if result is None:
             return None
-        from src.models.goal_based_investing.visualization import plot_scenario_tree
+        from src.models.personalized_goal_based_investing.visualization import plot_scenario_tree
 
         return plot_scenario_tree(result.tree)
 

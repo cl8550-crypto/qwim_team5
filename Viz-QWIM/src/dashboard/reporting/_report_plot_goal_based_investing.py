@@ -136,7 +136,7 @@ def build_plotnine_goal_based_investing_goal_probabilities(*, result: Any) -> An
     try:
         if result is None:
             return None
-        from src.models.goal_based_investing.performance import goal_success_probability
+        from src.models.personalized_goal_based_investing.performance import goal_success_probability
 
         rows = []
         for p in result.goal_set.priority_levels:
