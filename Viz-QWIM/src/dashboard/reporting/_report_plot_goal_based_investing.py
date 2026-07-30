@@ -6,18 +6,18 @@ pull data from ``reactives_shiny``, build the chart, and save it as SVG via
 the shared ``_save_plot`` helper from ``_report_plot_returns``.
 
 The live dashboard tab (``tab_goals.py``) renders interactive Plotly figures
-via ``goal_based_investing.visualization``; Typst cannot embed those (no JS
+via ``personalized_goal_based_investing.visualization``; Typst cannot embed those (no JS
 runtime), so this module is a **separate, static-chart implementation**
 covering the same three results with plotnine instead. Keep both in sync by
 hand if the underlying MSGPResult fields change shape.
 
 Public API re-exported via ``report_plot_export``:
-- ``build_plotnine_goal_based_investing_allocation``
-- ``build_plotnine_goal_based_investing_goal_probabilities``
-- ``build_plotnine_goal_based_investing_wealth_distribution``
-- ``export_plot_goal_based_investing_allocation``
-- ``export_plot_goal_based_investing_goal_probabilities``
-- ``export_plot_goal_based_investing_wealth_distribution``
+- ``build_plotnine_personalized_goal_based_investing_allocation``
+- ``build_plotnine_personalized_goal_based_investing_goal_probabilities``
+- ``build_plotnine_personalized_goal_based_investing_wealth_distribution``
+- ``export_plot_personalized_goal_based_investing_allocation``
+- ``export_plot_personalized_goal_based_investing_goal_probabilities``
+- ``export_plot_personalized_goal_based_investing_wealth_distribution``
 """
 
 from __future__ import annotations
@@ -51,10 +51,10 @@ from src.utils.custom_exceptions_errors_loggers.logger_custom import get_logger
 _logger = get_logger(name = __name__)
 
 #: Key under reactives_shiny["Inner_Variables_Shiny"] where tab_goals.py
-#: mirrors the currently-selected goal_based_investing.MSGPResult, matching
+#: mirrors the currently-selected personalized_goal_based_investing.MSGPResult, matching
 #: the same runtime-mutation pattern subtab_goals.py uses for
 #: User_Inputs_Shiny (see that module's observer_update_shared_reactives_shiny_goals).
-GOAL_BASED_INVESTING_RESULT_KEY = "Goal_Based_Investing_Selected_Result"
+personalized_goal_based_investing_RESULT_KEY = "personalized_goal_based_investing_Selected_Result"
 
 
 # =========================================================================
@@ -62,12 +62,12 @@ GOAL_BASED_INVESTING_RESULT_KEY = "Goal_Based_Investing_Selected_Result"
 # =========================================================================
 
 
-def build_plotnine_goal_based_investing_allocation(*, result: Any) -> Any:
+def build_plotnine_personalized_goal_based_investing_allocation(*, result: Any) -> Any:
     """Build a stacked-area chart of average allocation by stage.
 
     Parameters
     ----------
-    result : goal_based_investing.MSGPResult | None
+    result : personalized_goal_based_investing.MSGPResult | None
         A solved MSGP result.
 
     Returns
@@ -117,16 +117,16 @@ def build_plotnine_goal_based_investing_allocation(*, result: Any) -> Any:
             + _QWIM_THEME
         )
     except Exception as exc:  # noqa: BLE001  # pragma: no cover - report boundary tolerates heterogeneous plotting failures.
-        _logger.warning("build_plotnine_goal_based_investing_allocation: %s", exc)
+        _logger.warning("build_plotnine_personalized_goal_based_investing_allocation: %s", exc)
         return None
 
 
-def build_plotnine_goal_based_investing_goal_probabilities(*, result: Any) -> Any:
+def build_plotnine_personalized_goal_based_investing_goal_probabilities(*, result: Any) -> Any:
     """Build a bar chart of achievement probability per goal, in priority order.
 
     Parameters
     ----------
-    result : goal_based_investing.MSGPResult | None
+    result : personalized_goal_based_investing.MSGPResult | None
         A solved MSGP result.
 
     Returns
@@ -167,16 +167,16 @@ def build_plotnine_goal_based_investing_goal_probabilities(*, result: Any) -> An
             + theme(axis_text_x=element_text(angle=30, hjust=1))
         )
     except Exception as exc:  # noqa: BLE001  # pragma: no cover - report boundary tolerates heterogeneous plotting failures.
-        _logger.warning("build_plotnine_goal_based_investing_goal_probabilities: %s", exc)
+        _logger.warning("build_plotnine_personalized_goal_based_investing_goal_probabilities: %s", exc)
         return None
 
 
-def build_plotnine_goal_based_investing_wealth_distribution(*, result: Any) -> Any:
+def build_plotnine_personalized_goal_based_investing_wealth_distribution(*, result: Any) -> Any:
     """Build a probability-weighted histogram of terminal wealth.
 
     Parameters
     ----------
-    result : goal_based_investing.MSGPResult | None
+    result : personalized_goal_based_investing.MSGPResult | None
         A solved MSGP result.
 
     Returns
@@ -205,7 +205,7 @@ def build_plotnine_goal_based_investing_wealth_distribution(*, result: Any) -> A
             + _QWIM_THEME
         )
     except Exception as exc:  # noqa: BLE001  # pragma: no cover - report boundary tolerates heterogeneous plotting failures.
-        _logger.warning("build_plotnine_goal_based_investing_wealth_distribution: %s", exc)
+        _logger.warning("build_plotnine_personalized_goal_based_investing_wealth_distribution: %s", exc)
         return None
 
 
@@ -214,36 +214,36 @@ def build_plotnine_goal_based_investing_wealth_distribution(*, result: Any) -> A
 # =========================================================================
 
 
-def _get_selected_goal_based_investing_result(*, reactives_shiny: dict | None) -> Any:
+def _get_selected_personalized_goal_based_investing_result(*, reactives_shiny: dict | None) -> Any:
     """Fetch the currently-selected MSGPResult mirrored by tab_goals.py, or None."""
     inner = _get_inner_variables(reactives_shiny = reactives_shiny)
-    return _safe_reactive_get(reactive_value = inner.get(GOAL_BASED_INVESTING_RESULT_KEY))
+    return _safe_reactive_get(reactive_value = inner.get(personalized_goal_based_investing_RESULT_KEY))
 
 
-def export_plot_goal_based_investing_allocation(*, reactives_shiny: dict | None) -> Any:
+def export_plot_personalized_goal_based_investing_allocation(*, reactives_shiny: dict | None) -> Any:
     """Render the goal-based investing allocation-by-stage chart as SVG."""
-    result = _get_selected_goal_based_investing_result(reactives_shiny = reactives_shiny)
-    p = build_plotnine_goal_based_investing_allocation(result = result)
+    result = _get_selected_personalized_goal_based_investing_result(reactives_shiny = reactives_shiny)
+    p = build_plotnine_personalized_goal_based_investing_allocation(result = result)
     if p is None:
         return None
-    return _save_plot(plot = p, filename = "chart_goal_based_investing_allocation_by_stage.svg")
+    return _save_plot(plot = p, filename = "chart_personalized_goal_based_investing_allocation_by_stage.svg")
 
 
-def export_plot_goal_based_investing_goal_probabilities(*, reactives_shiny: dict | None) -> Any:
+def export_plot_personalized_goal_based_investing_goal_probabilities(*, reactives_shiny: dict | None) -> Any:
     """Render the goal achievement probability chart as SVG."""
-    result = _get_selected_goal_based_investing_result(reactives_shiny = reactives_shiny)
-    p = build_plotnine_goal_based_investing_goal_probabilities(result = result)
+    result = _get_selected_personalized_goal_based_investing_result(reactives_shiny = reactives_shiny)
+    p = build_plotnine_personalized_goal_based_investing_goal_probabilities(result = result)
     if p is None:
         return None
-    return _save_plot(plot = p, filename = "chart_goal_based_investing_goal_probabilities.svg")
+    return _save_plot(plot = p, filename = "chart_personalized_goal_based_investing_goal_probabilities.svg")
 
 
-def export_plot_goal_based_investing_wealth_distribution(*, reactives_shiny: dict | None) -> Any:
+def export_plot_personalized_goal_based_investing_wealth_distribution(*, reactives_shiny: dict | None) -> Any:
     """Render the terminal wealth distribution chart as SVG."""
-    result = _get_selected_goal_based_investing_result(reactives_shiny = reactives_shiny)
-    p = build_plotnine_goal_based_investing_wealth_distribution(result = result)
+    result = _get_selected_personalized_goal_based_investing_result(reactives_shiny = reactives_shiny)
+    p = build_plotnine_personalized_goal_based_investing_wealth_distribution(result = result)
     if p is None:
         return None
     return _save_plot(
-        plot = p, filename = "chart_goal_based_investing_wealth_distribution.svg"
+        plot = p, filename = "chart_personalized_goal_based_investing_wealth_distribution.svg"
     )

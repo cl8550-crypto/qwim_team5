@@ -495,7 +495,7 @@ def create_app_ui() -> Any:
         ),
         # 2. In create_app_ui(), after the Portfolios nav_panel:
         ui.nav_panel(
-            "Goal-Based Investing",
+            " Personalized Goals Investing",
             tab_goals_ui(
                 "ID_tab_goals",
                 data_utils=data_utils,

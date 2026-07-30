@@ -372,8 +372,8 @@ def get_goal_based_investing_results(*, project_dir: Any) -> dict[str, Any]:
 
     results_dir = project_dir / "inputs" / "processed" / "goal_based_investing"
     output: dict[str, Any] = {
-        "Goal_Based_Investing_Results": {},
-        "Goal_Based_Investing_Benchmarks": {},
+        "personalized_goal_based_investing_Results": {},
+        "personalized_goal_based_investing_Benchmarks": {},
     }
 
     if not results_dir.exists():
@@ -396,7 +396,7 @@ def get_goal_based_investing_results(*, project_dir: Any) -> dict[str, Any]:
                 pkl_path, read_exc,
             )
 
-    output["Goal_Based_Investing_Results"] = results
+    output["personalized_goal_based_investing_Results"] = results
     _logger.info(
         "Goal-based investing results loaded",
         extra={"n_plans": len(results)},

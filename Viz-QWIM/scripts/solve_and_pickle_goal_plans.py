@@ -2,15 +2,15 @@
 
 Run this offline (not from within Shiny) whenever a client's goals or the
 underlying market data changes. It writes one ``.pkl`` per client to
-``inputs/processed/goal_based_investing/``, which ``utils_data.py``'s
-``get_goal_based_investing_results()`` loads at dashboard startup.
+``inputs/processed/personalized_goal_based_investing/``, which ``utils_data.py``'s
+``get_personalized_goal_based_investing_results()`` loads at dashboard startup.
 
 Usage
 -----
     python3 scripts/solve_and_pickle_goal_plans.py
 
 Run from the repository root (so the relative ``inputs/`` path resolves and
-so ``src.models.goal_based_investing`` imports correctly -- see the
+so ``src.models.personalized_goal_based_investing`` imports correctly -- see the
 import-path warning in ``utils_data.py``'s docstring for why this matters).
 
 This script currently defines its client list and market-data source
@@ -32,10 +32,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # IMPORTANT: this import path must exactly match what utils_data.py uses to
-# unpickle -- both must say "src.models.goal_based_investing", not a bare
-# "goal_based_investing" import, or ModuleNotFoundError will surface later
+# unpickle -- both must say "src.models.personalized_goal_based_investing", not a bare
+# "personalized_goal_based_investing" import, or ModuleNotFoundError will surface later
 # at dashboard load time instead of here.
-from src.models.goal_based_investing import (
+from src.models.personalized_goal_based_investing import (
     CovarianceConfig,
     Goal,
     GoalSet,
@@ -48,7 +48,7 @@ from src.models.goal_based_investing import (
     generate_bootstrap_stage_paths_with_inflation,
 )
 
-OUTPUT_DIR = PROJECT_ROOT / "inputs" / "processed" / "goal_based_investing"
+OUTPUT_DIR = PROJECT_ROOT / "inputs" / "processed" / "personalized_goal_based_investing"
 
 
 #: cleaned_data/ lives next to Viz-QWIM, not inside it -- two levels above this
@@ -102,7 +102,7 @@ def _load_log_return_series(path: Path, label: str) -> pd.Series:
 
     The files store ``Log_Return`` (already computed, first row NaN). We
     convert to simple returns (``exp(log_return) - 1``) because the
-    goal_based_investing package compounds returns multiplicatively via
+    personalized_goal_based_investing package compounds returns multiplicatively via
     ``prod(1 + r) - 1`` throughout (stage compounding, wealth evolution),
     which assumes simple, not log, returns.
     """

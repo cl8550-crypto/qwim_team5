@@ -1,21 +1,21 @@
 """Goal-Based Investing Tab Module.
 
 Read-only dashboard tab presenting precomputed multi-stage stochastic goal
-programming (MSGP) plans -- see ``src/models/goal_based_investing`` for the
+programming (MSGP) plans -- see ``src/models/personalized_goal_based_investing`` for the
 optimizer itself. This tab does **not** solve anything live in the Shiny
 session; it selects and renders a plan that was solved offline.
 
 Integration contract
 ---------------------
 This tab expects ``data_inputs`` to contain a key
-``"Goal_Based_Investing_Results"`` mapping a client/plan label (str) to an
-already-solved ``goal_based_investing.MSGPResult`` object, e.g.:
+``"personalized_goal_based_investing_Results"`` mapping a client/plan label (str) to an
+already-solved ``personalized_goal_based_investing.MSGPResult`` object, e.g.:
 
 ```python
 import pickle
-from goal_based_investing import MSGPResult
+from personalized_goal_based_investing import MSGPResult
 
-data_inputs["Goal_Based_Investing_Results"] = {
+data_inputs["personalized_goal_based_investing_Results"] = {
     "Jane Doe - Retirement Plan": pickled_result_1,
     "John Smith - Retirement Plan": pickled_result_2,
 }
@@ -27,13 +27,13 @@ data_inputs["Goal_Based_Investing_Results"] = {
 ``MSGPOptimizer(...).solve()`` in a batch/notebook job per client, pickle the
 ``MSGPResult``, and load the pickles into this dict at dashboard startup
 inside ``get_data_inputs()``. Optionally, a matching
-``"Goal_Based_Investing_Benchmarks"`` key can map the same labels to a dict
+``"personalized_goal_based_investing_Benchmarks"`` key can map the same labels to a dict
 of benchmark ``WealthPath`` objects (e.g. ``{"60/40": wealth_path, ...}``)
 from ``portfolio_simulator.simulate_fixed_weight_benchmark`` for the
 tracking-error KPI; this is optional and the tab degrades gracefully without
 it.
 
-If ``"Goal_Based_Investing_Results"`` is missing or empty, the tab renders a
+If ``"personalized_goal_based_investing_Results"`` is missing or empty, the tab renders a
 placeholder message instead of erroring, so the dashboard still boots before
 any client plans have been computed.
 """
@@ -52,8 +52,8 @@ from src.utils.custom_exceptions_errors_loggers.logger_custom import get_logger
 #: Module-level logger instance
 _logger = get_logger(name=__name__)
 
-RESULTS_KEY = "Goal_Based_Investing_Results"
-BENCHMARKS_KEY = "Goal_Based_Investing_Benchmarks"
+RESULTS_KEY = "personalized_goal_based_investing_Results"
+BENCHMARKS_KEY = "personalized_goal_based_investing_Benchmarks"
 
 
 # =============================================================================
@@ -102,7 +102,7 @@ def tab_goals_ui(*, data_utils: dict, data_inputs: dict) -> Any:  # pragma: no c
             ui.p(
                 "No precomputed goal-based investing results were found. "
                 "Solve an MSGPResult offline (see this module's docstring) "
-                "and register it under data_inputs['Goal_Based_Investing_Results']."
+                "and register it under data_inputs['personalized_goal_based_investing_Results']."
             ),
         )
         return ui.div(selector, empty_state)
@@ -228,8 +228,8 @@ def tab_goals_server(  # pragma: no cover
         """Mirror the selected plan into shared reactive state for the report pipeline.
 
         The client-report exporters (report_plot_export /
-        _report_plot_goal_based_investing.py) read this exact key --
-        reactives_shiny["Inner_Variables_Shiny"]["Goal_Based_Investing_Selected_Result"]
+        _report_plot_personalized_goal_based_investing.py) read this exact key --
+        reactives_shiny["Inner_Variables_Shiny"]["personalized_goal_based_investing_Selected_Result"]
         -- via the same _get_inner_variables()/_safe_reactive_get() pattern
         used for every other tab's report data. Without this, "Generate PDF
         Report" would have no way to find which plan is currently selected.
@@ -241,15 +241,15 @@ def tab_goals_server(  # pragma: no cover
             return
 
         from src.dashboard.reporting._report_plot_goal_based_investing import (
-            GOAL_BASED_INVESTING_RESULT_KEY,
+            personalized_goal_based_investing_RESULT_KEY,
         )
 
         current = selected_result()
-        existing_rv = inner.get(GOAL_BASED_INVESTING_RESULT_KEY)
+        existing_rv = inner.get(personalized_goal_based_investing_RESULT_KEY)
         if existing_rv is not None and hasattr(existing_rv, "set"):
             existing_rv.set(current)
         else:
-            inner[GOAL_BASED_INVESTING_RESULT_KEY] = reactive.Value(current)
+            inner[personalized_goal_based_investing_RESULT_KEY] = reactive.Value(current)
 
     # --- Overview KPIs ---
 
