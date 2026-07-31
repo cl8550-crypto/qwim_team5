@@ -1,0 +1,19 @@
+\subsection{Model tests}
+\label{sec:gbi-tests}
+
+\subsubsection{Test 1: Historical walk-forward performance and robustness}
+The 36-month trailing-window rolling CVaR policy is the research baseline. It is evaluated on realized monthly returns after quarterly re-optimization with 10bp one-way transaction costs. A fixed Moderate 50/50 benchmark and a frozen policy use the same out-of-sample months. A 48-month rolling result is included only as a window-length sensitivity.
+
+\input{part2_testing/gbi_historical_robustness.tex}
+
+\subsubsection{Test 2: Client-input sensitivity}
+This test checks whether personalization inputs create observable changes in the policy recommendation or financial-plan result. The risk scenario changes the selected policy; asset and contribution scenarios change the terminal-wealth assessment; the expense scenario changes the retirement cash-flow gap and priority schedule.
+
+\input{part2_testing/gbi_client_sensitivity.tex}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\linewidth]{part2_testing/figures/gbi_client_sensitivity_success_probability.pdf}
+  \caption{Historical-bootstrap goal success probability under selected client-input scenarios.}
+  \label{fig:gbi-client-sensitivity}
+\end{figure}
