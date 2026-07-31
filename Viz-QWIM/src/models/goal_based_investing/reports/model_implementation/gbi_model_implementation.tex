@@ -1,0 +1,42 @@
+\subsection{Goal-Based Investing model implementation}
+\label{sec:gbi-model}
+
+QWIM Version 1 is an explainable, client-driven retirement-planning workflow. It does not claim to forecast market returns or to provide online portfolio optimization. Instead, a client risk-tolerance category selects a predefined six-ETF policy, while confirmed plan assets translate that policy into dollar allocations. Figure~\ref{fig:gbi-workflow} summarizes the implementation pipeline.
+
+\input{model_implementation/gbi_client_input_mapping.tex}
+\input{model_implementation/gbi_etf_universe.tex}
+\input{model_implementation/gbi_risk_bands.tex}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.98\linewidth]{model_implementation/figures/gbi_model_workflow.pdf}
+  \caption{Client-data-to-goal-assessment workflow in GBI Version 1.}
+  \label{fig:gbi-workflow}
+\end{figure}
+
+\subsubsection{Policy construction and historical evaluation}
+Each policy is long-only and fully invested. The offline CVaR construction minimizes historical 95\% expected shortfall subject to the client risk-profile equity band and ETF caps. For research evaluation, the rolling baseline re-estimates policy weights from the preceding 36 monthly observations and applies them over the next quarter without future information. The evaluation includes 10bp one-way trading costs at quarterly rebalances. The Dashboard itself retains a versioned static policy so that it does not optimize separately for each client.
+
+\input{model_implementation/gbi_rolling_policy_performance_36m.tex}
+
+\paragraph{Interpretation and limitations.}
+The rolling results are historical out-of-sample statistics, not forecasts or investment guarantees. The 95\% expected-shortfall estimate is based on a limited number of extreme monthly observations, and the 36-month window is a transparent research baseline rather than a claim of universal superiority. Client-level success probabilities are historical-bootstrap scenario frequencies and should be interpreted together with funding ratio and shortfall.
+
+\subsubsection{Client goal assessment}
+The selected policy is combined with confirmed plan assets, retirement horizon, annual contributions, income and priority spending. Goal success is evaluated over 2,000 historical-bootstrap terminal-wealth scenarios. The illustrative client results are reported in Table~\ref{tab:gbi-demo-goal-assessment}.
+
+\input{model_implementation/gbi_demo_client_goal_assessment.tex}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\linewidth]{model_implementation/figures/gbi_demo_client_goal_progress.pdf}
+  \caption{Projected goal-progress path for the illustrative Moderate client.}
+  \label{fig:gbi-demo-progress}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.82\linewidth]{model_implementation/figures/gbi_demo_client_terminal_distribution.pdf}
+  \caption{Historical-bootstrap terminal-wealth distribution for the illustrative Moderate client.}
+  \label{fig:gbi-demo-terminal}
+\end{figure}
