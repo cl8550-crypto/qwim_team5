@@ -33,6 +33,14 @@ from ._report_plot_allocation import (
     export_plot_weights_analysis,
     export_plot_weights_pie,
 )
+from ._report_plot_goal_based_investing import (
+    build_plotnine_personalized_goal_based_investing_allocation,
+    build_plotnine_personalized_goal_based_investing_goal_probabilities,
+    build_plotnine_personalized_goal_based_investing_wealth_distribution,
+    export_plot_personalized_goal_based_investing_allocation,
+    export_plot_personalized_goal_based_investing_goal_probabilities,
+    export_plot_personalized_goal_based_investing_wealth_distribution,
+)
 from ._report_plot_returns import (
     _EXPECTED_SVG_FILES,
     _IMAGES_DIR,
@@ -100,8 +108,19 @@ def export_all_report_plots(
     paths["skfolio_performance"] = export_plot_skfolio_performance(reactives_shiny = reactives_shiny)
     paths["simulation_fan_chart"] = export_plot_simulation_fan_chart(reactives_shiny = reactives_shiny)
     paths["simulation_histogram"] = export_plot_simulation_histogram(reactives_shiny = reactives_shiny)
-    paths["goal_parity_weights"] = export_plot_goal_parity_weights(reactives_shiny = reactives_shiny)
-    paths["goal_parity_goal_powers"] = export_plot_goal_parity_goal_powers(reactives_shiny = reactives_shiny)
+
+    paths["goal_parity_weights"] = export_plot_goal_parity_weights(reactives_shiny=reactives_shiny)
+    paths["goal_parity_goal_powers"] = export_plot_goal_parity_goal_powers(reactives_shiny=reactives_shiny)
+
+    paths["personalized_goal_based_investing_allocation"] = export_plot_personalized_goal_based_investing_allocation(
+        reactives_shiny=reactives_shiny
+    )
+    paths["personalized_goal_based_investing_goal_probabilities"] = export_plot_personalized_goal_based_investing_goal_probabilities(
+        reactives_shiny=reactives_shiny
+    )
+    paths["personalized_goal_based_investing_wealth_distribution"] = export_plot_personalized_goal_based_investing_wealth_distribution(
+        reactives_shiny=reactives_shiny
+    )
 
     generated = sum(1 for v in paths.values() if v is not None)
     _logger.info("Generated %d / %d SVG images", generated, len(paths))
@@ -117,8 +136,13 @@ def export_all_report_plots(
         "skfolio_performance": "chart_skfolio_optimization_comparison_portfolio_performance.svg",
         "simulation_fan_chart": "chart_simulation_portfolio_value_fan_chart.svg",
         "simulation_histogram": "chart_simulation_terminal_value_distribution.svg",
+
         "goal_parity_weights": "chart_goal_parity_weights.svg",
         "goal_parity_goal_powers": "chart_goal_parity_goal_powers.svg",
+
+        "personalized_goal_based_investing_allocation": "chart_personalized_goal_based_investing_allocation_by_stage.svg",
+        "personalized_goal_based_investing_goal_probabilities": "chart_personalized_goal_based_investing_goal_probabilities.svg",
+        "personalized_goal_based_investing_wealth_distribution": "chart_personalized_goal_based_investing_wealth_distribution.svg",
     }
     for key, svg_filename in _placeholder_map.items():
         if paths.get(key) is None:
@@ -162,6 +186,13 @@ __all__ = [
     "export_plot_skfolio_weights",
     "export_plot_weights_analysis",
     "export_plot_weights_pie",
+    # Goal-based investing (from _report_plot_personalized_goal_based_investing)
+    "build_plotnine_personalized_goal_based_investing_allocation",
+    "build_plotnine_personalized_goal_based_investing_goal_probabilities",
+    "build_plotnine_personalized_goal_based_investing_wealth_distribution",
+    "export_plot_personalized_goal_based_investing_allocation",
+    "export_plot_personalized_goal_based_investing_goal_probabilities",
+    "export_plot_personalized_goal_based_investing_wealth_distribution",
     # Risk / simulation (from _report_plot_risk)
     "_build_simulation_fan_data",
     "build_plotnine_simulation_fan_chart",
