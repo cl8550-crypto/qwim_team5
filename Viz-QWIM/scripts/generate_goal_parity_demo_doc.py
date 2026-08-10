@@ -164,48 +164,211 @@ def build_document(shots_dir: Path, out_path: Path) -> None:
         "market benchmark. Demo the subtabs left to right; each step feeds "
         "the next."
     )
-    gp_notes = {
+    # Per subtab: (intro paragraph, list of instruction bullets). A bullet is
+    # either a string, or a (text, [sub-bullets]) pair for nested detail.
+    gp_notes: dict[str, tuple[str, list]] = {
         "Overview & Guide": (
             "The landing page: why goal-based investing holds up across "
-            "market regimes, and the step-by-step usage guide. Partners can "
-            "download this document from the button here."
+            "market regimes, and the step-by-step usage guide. This document "
+            "can be downloaded from the button here.",
+            [
+                "Read the five advantage cards first — they are the 'why' "
+                "behind everything that follows.",
+                "The numbered stepper below them mirrors the subtabs to the "
+                "right; use it as your checklist while working through them.",
+                "Skim the amber 'Common mistakes' box before starting — it "
+                "covers the errors that most often lead to misleading results.",
+            ],
         ),
         "Investor Profile": (
-            "Step 1 — the client's risk comfort and horizon become the "
-            "model's risk-aversion and loss barrier. Point out the 'Source:' "
-            "line showing inputs flow in from the Clients tab."
+            "Step 1 — tell the model who you are. The client's risk comfort "
+            "and time horizon become the model's risk-aversion parameter and "
+            "personal loss barrier.",
+            [
+                (
+                    "If your advisor has filled in the Clients tab, leave "
+                    "'Use Clients tab inputs' checked — your horizon and risk "
+                    "profile flow in automatically; nothing else to do.",
+                    [],
+                ),
+                (
+                    "Otherwise, uncheck the box and set three sidebar inputs:",
+                    [
+                        "Risk profile — from Conservative to Aggressive; when "
+                        "unsure, start with Moderate.",
+                        "Strategic horizon T — years until the money is "
+                        "needed (e.g. years to retirement). Use the real "
+                        "timeline: a too-short horizon makes the portfolio "
+                        "overly cautious.",
+                        "Rebalancing frequency τ — how often the portfolio is "
+                        "reviewed. Semi-annual is the recommended default.",
+                    ],
+                ),
+                (
+                    "Before moving on, check two things on the right:",
+                    [
+                        "The table's 'loss tolerance' row — the decline you "
+                        "could accept before changing course. If it feels "
+                        "wrong, adjust the risk profile.",
+                        "The 'Source:' line — it says whether inputs came "
+                        "from the Clients tab or the sidebar. If it says "
+                        "Clients tab but that tab is empty or stale, uncheck "
+                        "the box and enter values manually.",
+                    ],
+                ),
+            ],
         ),
         "4×4 Asset Map": (
-            "Steps 2–4 — every asset is scored on how it actually behaves "
-            "toward each goal (option-style triggers, not static labels). "
-            "The scatter places each asset between the four goal corners."
+            "Steps 2–4 — choose what the model can invest in. Every asset is "
+            "scored on how it actually behaves toward each goal (option-style "
+            "triggers, not static labels), and the scatter places each asset "
+            "between the four goal corners.",
+            [
+                "Tick the checkboxes for the investments to consider; keeping "
+                "the full default list selected is a good starting point.",
+                "One asset can serve several goals at once (e.g. part Income, "
+                "part Preservation) — hover the scatter points to see each "
+                "asset's split.",
+                "Keep the universe broad: every goal needs at least a few "
+                "supporting assets. If a later step flags a goal as "
+                "'structurally scarce', return here and re-add tickers rather "
+                "than fighting the optimizer.",
+            ],
         ),
         "Strategic Optimization": (
-            "Step 5 — the optimizer balances the four goal powers (default: "
-            "25% each) or applies a deliberate tilt. Show the weights and "
-            "goal-power bars; note the warnings the page surfaces when "
-            "something needs advisor judgement."
+            "Step 5 — build the target portfolio. The optimizer balances the "
+            "four goal powers (default: 25% each) or applies a deliberate "
+            "tilt toward one goal.",
+            [
+                "Start with Goal Parity Balanced (the default) — for most "
+                "clients this is the recommended portfolio.",
+                (
+                    "Choose Goal Tilted only to deliberately favor one goal "
+                    "(more Growth for a young saver, more Income near "
+                    "retirement):",
+                    [
+                        "Pick the goal, then set the tilt-strength slider — "
+                        "small tilts (10–30%) are usually enough.",
+                        "A tilt shifts priorities between goals; it is NOT a "
+                        "'more return' dial. Maximum tilt concentrates the "
+                        "portfolio and gives up diversification.",
+                    ],
+                ),
+                (
+                    "Read any warning banners before trusting the numbers:",
+                    [
+                        "'Solver failure' — the shown weights are a best "
+                        "effort; confirm with your advisor before acting.",
+                        "'Structurally scarce goal' — the chosen investments "
+                        "cannot support that goal much further; fix it in "
+                        "Step 2, not here.",
+                    ],
+                ),
+            ],
         ),
         "Tactical Rebalancing": (
-            "Step 6 — a simulated market drift and the cost-aware trades "
-            "that restore the goal balance. Emphasize the turnover budget: "
-            "the model will not churn the portfolio."
+            "Step 6 — see how the portfolio stays on track. This page is a "
+            "simulation: markets drift the portfolio away from its targets, "
+            "and the model shows the cost-aware trades that restore the goal "
+            "balance.",
+            [
+                "Two controls: the σ slider sets how large the simulated "
+                "market move is; the seed picks which random scenario is "
+                "shown.",
+                (
+                    "Read the results top to bottom:",
+                    [
+                        "The summary line — number of trades and portfolio "
+                        "turnover (capped by design: the model will not churn "
+                        "everything).",
+                        "The bar chart — goal support drifted → after "
+                        "rebalance → target; bars should move back toward the "
+                        "target.",
+                        "The trade table — each row is one sell/buy pair, "
+                        "ranked so the most goal-restoring, lowest-cost "
+                        "trades come first.",
+                    ],
+                ),
+                "Different seeds give different trades — that is expected: "
+                "each seed is a different market scenario, not a different "
+                "answer to the same question.",
+            ],
         ),
         "Historical Backtest": (
-            "The evidence: a walk-forward replay with no look-ahead — the "
-            "model is re-trained on past data only at every step. The user "
-            "chooses the date range, training window, test window, and step "
-            "size, then runs it live."
+            "The evidence — a walk-forward replay with no look-ahead: the "
+            "model is re-trained on past data only at every step, its "
+            "portfolio is held for one step, and realized results accumulate "
+            "next to a classic 60/40 benchmark.",
+            [
+                (
+                    "Four sidebar settings (the defaults are sensible — start "
+                    "there):",
+                    [
+                        "Backtest date range — which slice of history to "
+                        "replay.",
+                        "Training window — years of past data the model "
+                        "learns from at each step; keep it at 2.5 years or "
+                        "more, shorter windows trigger a noise warning.",
+                        "Test window — the horizon each fold's performance is "
+                        "measured over in the fold table.",
+                        "Step size — how often the model re-trains and "
+                        "rebalances; leave it equal to the review frequency τ "
+                        "unless there is a reason not to.",
+                    ],
+                ),
+                (
+                    "Click 'Run backtest' and read the results top to bottom:",
+                    [
+                        "The chart — growth of $1 for the model vs. the "
+                        "benchmark; dotted vertical lines mark re-training "
+                        "dates.",
+                        "The metrics table — return, volatility, Sharpe "
+                        "ratio, and max drawdown side by side.",
+                        "The fold table — per-period results, showing when "
+                        "the model helped (stress periods) and when it lagged "
+                        "(strong bull runs).",
+                    ],
+                ),
+                "A red message means the configuration is impossible (e.g. "
+                "the date range is too short for the training window) — "
+                "shrink the training window or widen the dates.",
+            ],
         ),
     }
     for subtab in GP_SUBTABS:
+        intro, bullets = gp_notes[subtab]
         document.add_heading(subtab, level=2)
-        document.add_paragraph(gp_notes[subtab])
+        document.add_paragraph(intro)
         _add_picture(
             document,
             shots_dir / f"gp_{_slug(subtab)}.png",
             f"Goal Parity — {subtab}.",
         )
+        document.add_paragraph("How to use this page:").runs[0].bold = True
+        for bullet in bullets:
+            if isinstance(bullet, tuple):
+                text, children = bullet
+                document.add_paragraph(text, style="List Bullet")
+                for child in children:
+                    document.add_paragraph(child, style="List Bullet 2")
+            else:
+                document.add_paragraph(bullet, style="List Bullet")
+
+    document.add_heading("Common mistakes to avoid", level=2)
+    for mistake in [
+        "Jumping straight to Optimization or Rebalancing — the results then "
+        "reflect the default Moderate profile, not the client's.",
+        "Leaving 'Use Clients tab inputs' checked when the Clients tab is "
+        "empty or stale — always check the 'Source:' line in Step 1.",
+        "Setting a horizon shorter than the client's actual timeline, which "
+        "understates how much Growth the plan can safely carry.",
+        "Ignoring the solver-failure or scarce-goal warnings in Step 3 — "
+        "they qualify every number shown downstream.",
+        "Comparing rebalancing trades across different drift seeds and "
+        "concluding the model is unstable — each seed is a different "
+        "scenario.",
+    ]:
+        document.add_paragraph(mistake, style="List Bullet")
 
     document.add_heading("Backtest results (live run)", level=2)
     document.add_paragraph(
