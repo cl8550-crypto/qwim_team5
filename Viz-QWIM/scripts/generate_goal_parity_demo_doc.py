@@ -102,7 +102,9 @@ def _add_picture(document: Document, path: Path, caption: str) -> None:
 def build_document(shots_dir: Path, out_path: Path) -> None:
     document = Document()
 
-    document.add_heading("QWIM Dashboard — Demo & User Guide", level=0)
+    title = document.add_heading("QWIM Dashboard — Demo & User Guide", level=0)
+    for run in title.runs:  # default Title style (28pt) wraps to two lines
+        run.font.size = Pt(22)
     document.add_paragraph(
         "This guide walks through the QWIM dashboard the way we present it to "
         "business partners: what each tab shows, the order to demo it in, and "
