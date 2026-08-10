@@ -10,6 +10,7 @@ from src.dashboard.shiny_tab_goal_based_investing._goal_based_investing_state im
     GOAL_FINANCIAL_PLAN_STATE_KEY,
     GOAL_MULTISTAGE_PREVIEW_STATE_KEY,
     build_goal_assessment_state,
+    build_goal_priority_cashflow_state,
     build_goal_profile_from_client_data,
     build_multistage_preview_state,
     format_currency,
@@ -17,6 +18,14 @@ from src.dashboard.shiny_tab_goal_based_investing._goal_based_investing_state im
 from src.dashboard.shiny_tab_goal_based_investing.subtab_goal_based_investing_assessment import (
     subtab_goal_based_investing_assessment_server,
     subtab_goal_based_investing_assessment_ui,
+)
+from src.dashboard.shiny_tab_goal_based_investing.subtab_goal_based_investing_cash_flow import (
+    subtab_goal_based_investing_cash_flow_server,
+    subtab_goal_based_investing_cash_flow_ui,
+)
+from src.dashboard.shiny_tab_goal_based_investing.subtab_goal_based_investing_policy import (
+    subtab_goal_based_investing_policy_server,
+    subtab_goal_based_investing_policy_ui,
 )
 from src.dashboard.shiny_tab_goal_based_investing.subtab_goal_based_investing_profile import (
     subtab_goal_based_investing_profile_server,
@@ -53,6 +62,10 @@ def Test_Tab_Goal_Based_Investing_Server_Is_Callable() -> None:
         subtab_goal_based_investing_profile_server,
         subtab_goal_based_investing_assessment_ui,
         subtab_goal_based_investing_assessment_server,
+        subtab_goal_based_investing_policy_ui,
+        subtab_goal_based_investing_policy_server,
+        subtab_goal_based_investing_cash_flow_ui,
+        subtab_goal_based_investing_cash_flow_server,
     ],
 )
 def Test_Goal_Based_Investing_Subtab_Entry_Points_Are_Callable(*, module_function: object) -> None:
@@ -135,6 +148,28 @@ def Test_Risk_Policy_Returns_Produce_A_Probabilistic_Goal_Assessment() -> None:
     )
     assert result_state["Assessment"].success_probability is not None
     assert 0 <= result_state["Assessment"].success_probability <= 1
+    assert result_state["Terminal_Values"] is not None
+
+
+@pytest.mark.unit()
+def Test_Goal_Priority_Cashflow_State_Uses_The_Selected_Policy_Return_Path() -> None:
+    """The retirement page reports coverage for each priority with a policy path."""
+    profile = {
+        "Portfolio_Monthly_Returns": pd.Series([0.01, -0.005, 0.007] * 24),
+        "Confirmed_Plan_Assets": 300_000.0,
+        "Annual_Goal_Priorities": {
+            "essential": 24_000.0,
+            "important": 6_000.0,
+            "aspirational": 3_000.0,
+        },
+        "Annual_Guaranteed_Income": 18_000.0,
+    }
+
+    result_state = build_goal_priority_cashflow_state(profile=profile)
+
+    assert result_state["Result"].final_wealth >= 0.0
+    assert set(result_state["Payment_Rates"]) == {"Essential", "Important", "Aspirational"}
+    assert all(0.0 <= rate <= 1.0 for rate in result_state["Payment_Rates"].values())
 
 
 @pytest.mark.unit()

@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Out-of-sample performance of six-ETF rolling CVaR policies (48-month trailing window).}
+\label{tab:gbi-rolling-policy-48m}
+\begin{tabular}{lrrrrrr}
+\toprule
+Risk profile & Annual return & Annual vol. & Sharpe & Max drawdown & ES (95\%) & Months \\
+\midrule
+Conservative & 6.73\% & 5.02\% & 1.33 & -4.67\% & 2.59\% & 47 \\
+Moderate Conservative & 4.10\% & 5.32\% & 0.78 & -5.30\% & 2.83\% & 47 \\
+Moderate & 4.65\% & 6.99\% & 0.69 & -7.70\% & 3.84\% & 47 \\
+Moderate Aggressive & 5.97\% & 8.61\% & 0.72 & -9.58\% & 4.84\% & 47 \\
+Aggressive & 9.87\% & 10.24\% & 0.97 & -10.39\% & 5.44\% & 47 \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}
+\begin{minipage}{0.96\linewidth}
+\footnotesize
+Notes: Monthly walk-forward out-of-sample returns. Policies are re-optimized quarterly from the trailing 48-month window; 10bp one-way transaction costs are deducted at each rebalance. Annual return is CAGR; annual volatility and Sharpe use monthly data scaled by $\sqrt{12}$. Sharpe assumes a zero risk-free rate. ES is historical 95\% expected shortfall.
+\end{minipage}
+\end{table}

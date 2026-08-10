@@ -255,6 +255,10 @@ from src.dashboard.shiny_tab_setup.tab_setup import (
     tab_setup_server,
     tab_setup_ui,
 )
+from src.dashboard.shiny_tab_goals.tab_goals import (
+    tab_goals_server,
+    tab_goals_ui,
+)
 
 
 _logger.debug("Dashboard components imported successfully")
@@ -509,6 +513,15 @@ def create_app_ui() -> Any:
                 data_inputs=data_inputs,
             ),  # Input datasets for analysis
         ),
+        # 2. In create_app_ui(), after the Portfolios nav_panel:
+        ui.nav_panel(
+            " Personalized Goals Investing",
+            tab_goals_ui(
+                "ID_tab_goals",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
         # Products tab (annuities, insurance, etc.)
         ui.nav_panel(
             "Products",
@@ -748,20 +761,23 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
         reactives_shiny=reactives_shiny,
     )  # Centralized reactive state for coordination
 
-    # Initialize Goal Parity module server (individual model tab)
-    tab_goal_parity_server(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
-        id="ID_tab_goal_parity",  # pyrefly: ignore[unexpected-keyword,bad-argument-count]  # Unique module identifier following naming convention
-        data_utils=data_utils,  # Utility functions and configuration settings
-        data_inputs=data_inputs,  # Input datasets (model loads cleaned_data itself)
-        reactives_shiny=reactives_shiny,
-    )  # Reads Clients-tab inputs for investor profiling
-
-    tab_covariance_server(
-        id="ID_tab_covariance",
+    # Initialize Goal Parity module server
+    tab_goal_parity_server(
+        id="ID_tab_goal_parity",
         data_utils=data_utils,
         data_inputs=data_inputs,
         reactives_shiny=reactives_shiny,
     )
+
+    tab_goals_server(
+        id="ID_tab_goals",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
+
+    tab_covariance_server(
+        id="ID_tab_covariance",)
 
 def app_factory() -> App:
     """Create a fresh Shiny application instance from the module UI and server."""
