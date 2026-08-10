@@ -42,6 +42,11 @@ def subtab_goal_based_investing_assessment_ui(
             class_="mt-3",
         ),
         ui.card(
+            ui.card_header("Historical-bootstrap terminal value distribution"),
+            ui.card_body(ui.output_plot("output_terminal_distribution")),
+            class_="mt-3",
+        ),
+        ui.card(
             ui.card_header("Assumptions and results"),
             ui.card_body(ui.output_ui("output_assessment_summary")),
             class_="mt-3",
@@ -159,6 +164,41 @@ def subtab_goal_based_investing_assessment_server(
         axis.ticklabel_format(axis="y", style="plain")
         axis.legend()
         axis.grid(alpha=0.25)
+        figure.tight_layout()
+        return figure
+
+    @output
+    @render.plot
+    def output_terminal_distribution() -> Any:
+        """Plot the policy-bootstrap range and the client's target amount."""
+        result_state = get_assessment_state()
+        if result_state is None or result_state["Terminal_Values"] is None:
+            return None
+
+        from matplotlib import pyplot as plt
+
+        terminal_values = result_state["Terminal_Values"]
+        assessment = result_state["Assessment"]
+        figure, axis = plt.subplots(figsize=(10, 4.5))
+        axis.hist(terminal_values, bins=35, color="#0d6efd", alpha=0.75)
+        axis.axvline(
+            assessment.target_amount,
+            color="#dc3545",
+            linestyle="--",
+            linewidth=2,
+            label="Target amount",
+        )
+        axis.axvline(
+            assessment.projected_amount,
+            color="#20c997",
+            linewidth=2,
+            label="Median projected value",
+        )
+        axis.set_xlabel("Terminal portfolio value ($)")
+        axis.set_ylabel("Historical-bootstrap scenarios")
+        axis.ticklabel_format(axis="x", style="plain")
+        axis.legend()
+        axis.grid(axis="y", alpha=0.25)
         figure.tight_layout()
         return figure
 

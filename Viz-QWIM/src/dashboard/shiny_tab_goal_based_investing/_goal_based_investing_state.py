@@ -13,6 +13,10 @@ from src.models.goal_based_investing import (
     build_goal_postponement_model,
     build_portfolio_specification_from_plan,
 )
+from src.models.goal_based_investing.goal_priority_backtest import (
+    backtest_goal_priority_cashflows,
+    payment_rate,
+)
 from src.models.goal_based_investing.scenario_tree_goal_based_investing import (
     historical_bootstrap_tree,
 )
@@ -61,6 +65,7 @@ def build_goal_assessment_state(
         years_to_goal=int(profile["Years_To_Goal"]),
         annual_contribution=float(profile["Annual_Contribution"]),
     )
+    terminal_values: np.ndarray | None = None
     if portfolio_monthly_returns is None:
         assessment = goal_model.assess(annual_return=annual_return_decimal)
     else:
@@ -70,13 +75,11 @@ def build_goal_assessment_state(
         if (monthly_returns <= -1.0).any():
             raise ValueError("portfolio_monthly_returns cannot contain a loss of 100% or more")
         annual_return_decimal = (1.0 + float(monthly_returns.mean())) ** 12 - 1.0
-        profile["Annual_Return_Percent"] = annual_return_decimal * 100.0
-        assessment = goal_model.assess_terminal_values(
-            _bootstrap_terminal_values(
-                goal_model=goal_model,
-                monthly_returns=monthly_returns,
-            ),
+        terminal_values = _bootstrap_terminal_values(
+            goal_model=goal_model,
+            monthly_returns=monthly_returns,
         )
+        assessment = goal_model.assess_terminal_values(terminal_values)
     annual_progress = [
         goal_model.current_amount
         if years_elapsed == 0
@@ -93,6 +96,7 @@ def build_goal_assessment_state(
         "Assessment": assessment,
         "Annual_Progress": annual_progress,
         "Years": list(range(goal_model.years_to_goal + 1)),
+        "Terminal_Values": terminal_values,
     }
 
 
@@ -213,7 +217,49 @@ def build_goal_profile_from_client_data(
         0.0,
         profile["Annual_Goal_Needs"] - profile["Annual_Guaranteed_Income"],
     )
+    profile["Annual_Goal_Priorities"] = {
+        priority: max(0.0, float(goals.get(priority, 0.0)))
+        for priority in ("essential", "important", "aspirational")
+    }
     return profile
+
+
+def build_goal_priority_cashflow_state(*, profile: dict[str, Any]) -> dict[str, Any]:
+    """Evaluate priority spending against the selected policy's realised path."""
+    portfolio_returns = profile.get("Portfolio_Monthly_Returns")
+    if portfolio_returns is None:
+        raise ValueError("A selected policy return path is required for cash-flow analysis")
+
+    priorities = profile["Annual_Goal_Priorities"]
+    result = backtest_goal_priority_cashflows(
+        portfolio_returns,
+        initial_wealth=float(profile["Confirmed_Plan_Assets"]),
+        annual_essential=float(priorities["essential"]),
+        annual_important=float(priorities["important"]),
+        annual_aspirational=float(priorities["aspirational"]),
+        annual_guaranteed_income=float(profile["Annual_Guaranteed_Income"]),
+    )
+    payment_rates = {
+        "Essential": payment_rate(
+            paid=result.essential_paid,
+            expired=result.essential_shortfall,
+        ),
+        "Important": payment_rate(
+            paid=result.important_paid,
+            expired=result.important_expired,
+            postponed=result.important_postponed,
+        ),
+        "Aspirational": payment_rate(
+            paid=result.aspirational_paid,
+            expired=result.aspirational_expired,
+            postponed=result.aspirational_postponed,
+        ),
+    }
+    return {
+        "Result": result,
+        "Payment_Rates": payment_rates,
+        "Annual_Priorities": priorities,
+    }
 
 
 def _financial_total(values: dict[str, Any]) -> float:
