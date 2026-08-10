@@ -58,34 +58,76 @@ tracking strategies, while still realigning decisively when drift is real.
 """
 
 _HOW_MARKDOWN = """
-Work the subtabs **left to right** — each step feeds the next, and skipping
-ahead means later steps silently run on defaults instead of your inputs.
+Work the subtabs **left to right** — each step feeds the next. If you skip
+ahead, later steps quietly use default settings instead of yours.
 
-**Step 1 — Investor Profile.** If the Clients tab is filled in, leave
-*"Use Clients tab inputs"* checked: horizon and risk profile are read from
-there automatically. Otherwise uncheck it and set the risk profile, horizon
-T, and rebalancing frequency τ by hand. *Before moving on*, confirm the
-table shows the η and loss barrier you expect, and read the "Source:" line
-under it — it tells you which inputs are actually being used.
+**Step 1 — Investor Profile** *(tell the model who you are)*
 
-**Step 2 — 4×4 Asset Map.** Choose the investment universe with the ticker
-checkboxes. The map shows how each asset splits across the four goals.
-Deselecting too many tickers can leave a goal with no support — if you see
-a goal flagged as *structurally scarce* later, revisit this step first.
+- **If your advisor has filled in the Clients tab:** leave
+  *"Use Clients tab inputs"* checked. Your time horizon and risk comfort
+  level are read from there automatically — nothing else to do.
+- **If not (or you want to experiment):** uncheck the box, then set three
+  things in the sidebar:
+  - *Risk profile* — how comfortable you are with ups and downs, from
+    Conservative to Aggressive. When unsure, start with Moderate.
+  - *Strategic horizon T* — how many years until you need the money
+    (e.g. years until retirement). Use your real timeline; a too-short
+    horizon makes the portfolio overly cautious.
+  - *Rebalancing frequency τ* — how often the portfolio is reviewed.
+    Semi-annual is the recommended default.
+- **Before moving on, check two things** on the right:
+  - The table shows your profile translated into model terms — most
+    importantly the *loss tolerance*, the decline you could accept before
+    changing course. If that number feels wrong, adjust the risk profile.
+  - The *"Source:"* line confirms where inputs came from (Clients tab vs.
+    manual). If it says Clients tab but that tab is empty or outdated,
+    uncheck the box and enter values manually.
 
-**Step 3 — Strategic Optimization.** *Goal Parity Balanced* (the default)
-targets equal 25% power for each goal — start here. *Goal Tilted* lets you
-favor one goal via the tilt-strength slider; note a tilt re-weights goal
-*priorities*, it is not a return-maximizing dial. Heed the on-screen
-warnings: a solver-failure note means the shown weights are a best effort
-and should be confirmed before use, and a scarce-goal note means the
-universe itself limits that goal, not the optimizer.
+**Step 2 — 4×4 Asset Map** *(choose what the model can invest in)*
 
-**Step 4 — Tactical Rebalancing.** Simulates the portfolio drifting away
-from target (the σ slider controls how far, the seed picks the scenario)
-and shows the trades the signal-priority rule would execute. Different
-seeds produce different drift scenarios and therefore different trades —
-that is expected, not an error.
+- Tick the boxes for the investments you want considered. Keeping the full
+  default list selected is a good starting point.
+- The map shows how each investment supports the four goals — one asset
+  can serve several goals at once (e.g. part Income, part Preservation).
+- **Keep the universe broad:** every goal needs at least a few supporting
+  assets. If a later step flags a goal as *structurally scarce*, come back
+  here and re-add tickers rather than fighting the optimizer.
+
+**Step 3 — Strategic Optimization** *(build your target portfolio)*
+
+- Start with **Goal Parity Balanced** (the default): it aims for equal 25%
+  support of all four goals. For most clients this is the recommended
+  portfolio.
+- Choose **Goal Tilted** only if you deliberately want to favor one goal
+  (e.g. more Growth for a young saver, more Income near retirement):
+  - Pick the goal to favor, then set the *tilt strength* slider — small
+    tilts (10–30%) are usually enough.
+  - A tilt shifts *priorities* between goals; it is **not** a "more
+    return" dial. Pushing it to the maximum concentrates the portfolio
+    and gives up diversification.
+- **Read any warning banners before trusting the numbers:**
+  - *Solver failure* — the shown weights are a best effort; confirm with
+    your advisor before acting on them.
+  - *Structurally scarce goal* — the chosen investments simply can't
+    support that goal much further; fix it in Step 2, not here.
+
+**Step 4 — Tactical Rebalancing** *(see how the portfolio stays on track)*
+
+- This step is a **simulation**: it shows what would happen after markets
+  move your portfolio away from its targets, and which trades the model
+  would make to bring it back.
+- Two controls: the *σ slider* sets how large the simulated market move
+  is; the *seed* picks which random scenario you see.
+- Read the results top to bottom:
+  - The summary line: how many trades and how much of the portfolio
+    turned over (the model caps this — it will never churn everything).
+  - The bar chart: goal support *drifted → after rebalance → target*.
+    After rebalancing, the bars should move back toward the target.
+  - The trade table: each row is one sell/buy pair, ranked so the most
+    goal-restoring, lowest-cost trades come first.
+- **Different seeds give different trades — that is expected.** Each seed
+  is a different market scenario, not a different answer to the same
+  question.
 
 ---
 
