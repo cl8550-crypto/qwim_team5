@@ -21,16 +21,14 @@ def subtab_covariance_comparison_ui(
 
     return ui.div(
         ui.h2("Estimator Comparison"),
-        ui.p(
-            "Compare covariance estimators across forecast accuracy and "
-            "numerical stability."
-        ),
+        ui.p("Compare covariance estimators across forecast accuracy and numerical stability."),
         ui.card(
             ui.card_header("Estimator ranking"),
             ui.p(
-                "Estimators are ranked by relative Frobenius loss. "
-                "Lower values indicate better out-of-sample covariance "
-                "forecast accuracy.",
+                "Estimators are ranked according to the selected portfolio "
+                "modelling priority. A lower Priority Score indicates a stronger "
+                "recommendation based on forecast accuracy, numerical stability, "
+                "or their balanced combination.",
                 class_="text-muted",
             ),
             ui.output_data_frame("output_summary_table"),
@@ -90,14 +88,10 @@ def subtab_covariance_comparison_server(
     def output_loss_plot():
         _, summary = covariance_results()
 
-        plot_data = summary.sort(
-            "average_relative_frobenius_loss"
-        )
+        plot_data = summary.sort("average_relative_frobenius_loss")
 
         estimators = plot_data["estimator"].to_list()
-        values = plot_data[
-            "average_relative_frobenius_loss"
-        ].to_list()
+        values = plot_data["average_relative_frobenius_loss"].to_list()
 
         figure, axis = plt.subplots(figsize=(9, 5))
 
@@ -130,14 +124,10 @@ def subtab_covariance_comparison_server(
     def output_condition_plot():
         _, summary = covariance_results()
 
-        plot_data = summary.sort(
-            "average_condition_number"
-        )
+        plot_data = summary.sort("average_condition_number")
 
         estimators = plot_data["estimator"].to_list()
-        values = plot_data[
-            "average_condition_number"
-        ].to_list()
+        values = plot_data["average_condition_number"].to_list()
 
         figure, axis = plt.subplots(figsize=(9, 5))
 
