@@ -11,6 +11,8 @@ pipeline stage:
 2. 4x4 Asset Map — Steps 2-4 (EPV, skew-adjusted vols, option-based split)
 3. Strategic Optimization — Step 5 (Goal Parity Balanced / Tilted)
 4. Tactical Rebalancing — Step 6 (signal-priority trades)
+5. Historical Backtest — walk-forward train/test/step evaluation with all
+   model inputs re-estimated per fold from training data only
 
 The subtab servers are chained through returned reactives: profile ->
 (selected tickers, Steps 2-4 pipeline) -> strategic result -> rebalancing.
@@ -27,6 +29,10 @@ from shiny import module, ui
 
 from src.dashboard.shiny_tab_goal_parity.subtab_goal_parity_guide import (
     subtab_goal_parity_guide_ui,
+)
+from src.dashboard.shiny_tab_goal_parity.subtab_goal_parity_backtest import (
+    subtab_goal_parity_backtest_server,
+    subtab_goal_parity_backtest_ui,
 )
 from src.dashboard.shiny_tab_goal_parity.subtab_goal_parity_asset_map import (
     subtab_goal_parity_asset_map_server,
@@ -94,6 +100,14 @@ def tab_goal_parity_ui(*, data_utils: dict, data_inputs: dict) -> Any:  # pragma
                 data_inputs=data_inputs,
             ),
         ),
+        ui.nav_panel(
+            "Historical Backtest",
+            subtab_goal_parity_backtest_ui(  # type: ignore[call-arg]
+                id="ID_tab_goal_parity_subtab_backtest",  # pyright: ignore[reportCallIssue]
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
     ]
     return ui.navset_tab(*tab_panels, id="ID_tab_goal_parity_tabs_all")
 
@@ -135,6 +149,14 @@ def tab_goal_parity_server(  # pragma: no cover
         reactives_shiny=reactives_shiny,
         pipeline=pipeline,
         strategic=strategic,
+    )
+    subtab_goal_parity_backtest_server(  # type: ignore[call-arg]
+        id="ID_tab_goal_parity_subtab_backtest",  # pyright: ignore[reportCallIssue]
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+        profile=profile,
+        selected_tickers=selected_tickers,
     )
     return {
         "Profile_Server": profile,

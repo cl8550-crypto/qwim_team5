@@ -154,6 +154,37 @@ _STEPS: list[tuple[str, str, str]] = [
   question.
 """,
     ),
+    (
+        "Historical Backtest",
+        "See how the model would have done",
+        """
+- This step replays history **without look-ahead**: the model is trained
+  only on data before each date, its portfolio is held for one step, and
+  the realized results accumulate — then repeat. What you see is how the
+  strategy *would have* performed, next to a classic 60/40 benchmark.
+- Four settings in the sidebar (the defaults are sensible — start there):
+  - *Backtest date range* — which slice of history to replay.
+  - *Training window* — how many years of past data the model learns
+    from at each step. Keep it at 2.5 years or more; shorter windows
+    make the risk estimates noisy and trigger a warning.
+  - *Test window* — the horizon each fold's performance is measured
+    over in the fold table.
+  - *Step size* — how often the model re-trains and rebalances. Leave
+    it equal to your review frequency τ unless you have a reason not to.
+- Click **Run backtest** and read the results top to bottom:
+  - The chart: growth of $1 for the model vs. the benchmark; dotted
+    vertical lines mark each re-training date.
+  - The metrics table: return, volatility, Sharpe ratio, and max
+    drawdown side by side. Lower drawdown and volatility at a
+    reasonable return is the model's goal — it is *not* trying to beat
+    the benchmark's raw return.
+  - The fold table: per-period results, so you can see *when* the model
+    helped (stress periods) and when it lagged (strong bull runs).
+- **A red message means the configuration is impossible** (e.g. the date
+  range is too short for the training window) — shrink the training
+  window or widen the dates.
+""",
+    ),
 ]
 
 _MISTAKES: list[str] = [

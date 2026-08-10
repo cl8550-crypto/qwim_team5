@@ -7,6 +7,11 @@ tactical rebalancing. Public entry points re-exported here.
 
 from __future__ import annotations
 
+from src.models.goal_parity._goalparity_backtest import (
+    BacktestFold,
+    BacktestResult,
+    run_walk_forward,
+)
 from src.models.goal_parity._goalparity_calibration import CalibrationSuite
 from src.models.goal_parity._goalparity_cashflow import CashFlowEstimator, CashFlowProfile
 from src.models.goal_parity._goalparity_data import AssetStats, AssetUniverse, load_default_universe
@@ -41,6 +46,8 @@ __all__ = [
     "RISK_PROFILE_TO_ETA",
     "THETA_BALANCED",
     "AdjustedVolatility",
+    "BacktestFold",
+    "BacktestResult",
     "AssetStats",
     "AssetUniverse",
     "CalibrationSuite",
@@ -60,5 +67,6 @@ __all__ = [
     "first_passage_probability",
     "load_default_universe",
     "normalize_risk_profile",
+    "run_walk_forward",
     "tilted_theta",
 ]
