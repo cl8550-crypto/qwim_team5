@@ -28,6 +28,7 @@ from typing import Any
 from shiny import module, ui
 
 from src.dashboard.shiny_tab_goal_parity.subtab_goal_parity_guide import (
+    subtab_goal_parity_guide_server,
     subtab_goal_parity_guide_ui,
 )
 from src.dashboard.shiny_tab_goal_parity.subtab_goal_parity_backtest import (
@@ -121,7 +122,13 @@ def tab_goal_parity_server(  # pragma: no cover
     data_inputs: dict,
     reactives_shiny: dict,
 ) -> dict | None:
-    """Coordinates the four subtab servers, chaining their reactives."""
+    """Coordinates the subtab servers, chaining their reactives."""
+    subtab_goal_parity_guide_server(  # type: ignore[call-arg]
+        id="ID_tab_goal_parity_subtab_guide",  # pyright: ignore[reportCallIssue]
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
     profile = subtab_goal_parity_profile_server(  # type: ignore[call-arg]
         id="ID_tab_goal_parity_subtab_profile",  # pyright: ignore[reportCallIssue]
         data_utils=data_utils,

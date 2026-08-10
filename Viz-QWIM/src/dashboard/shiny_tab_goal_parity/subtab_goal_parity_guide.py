@@ -13,14 +13,18 @@ so it cannot leak into other tabs.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
-from shiny import module, ui
+from shiny import module, render, ui
 
 from src.utils.custom_exceptions_errors_loggers.logger_custom import get_logger
 
 
 _logger = get_logger(name=__name__)
+
+#: Pre-generated demo guide (see scripts/generate_goal_parity_demo_doc.py).
+_DEMO_GUIDE_PATH = Path(__file__).parent / "assets" / "QWIM_Dashboard_Demo_Guide.docx"
 
 
 # --- Content -----------------------------------------------------------------
@@ -316,6 +320,14 @@ def _hero() -> Any:
             "and how to walk through the subtabs step by step."
         ),
         ui.div(*chips, class_="gpg-chips"),
+        ui.div(
+            ui.download_button(
+                "download_demo_guide",
+                "Download the demo guide (.docx)",
+                class_="btn btn-light btn-sm",
+            ),
+            style="margin-top: 1rem;",
+        ),
         class_="gpg-hero",
     )
 
@@ -383,3 +395,27 @@ def subtab_goal_parity_guide_ui(
         _mistakes(),
         style="max-width: 1200px; margin: 0 auto; padding-top: 0.8rem;",
     )
+
+
+@module.server
+def subtab_goal_parity_guide_server(  # pragma: no cover
+    input: Any,
+    output: Any,
+    session: Any,
+    *,
+    data_utils: dict,
+    data_inputs: dict,
+    reactives_shiny: dict,
+) -> None:
+    del input, output, session, data_utils, data_inputs, reactives_shiny
+
+    @render.download(filename=_DEMO_GUIDE_PATH.name)
+    def download_demo_guide():
+        if not _DEMO_GUIDE_PATH.is_file():
+            _logger.error(
+                "Demo guide missing at %s; regenerate with "
+                "scripts/generate_goal_parity_demo_doc.py",
+                _DEMO_GUIDE_PATH,
+            )
+            raise FileNotFoundError(_DEMO_GUIDE_PATH)
+        yield _DEMO_GUIDE_PATH.read_bytes()
