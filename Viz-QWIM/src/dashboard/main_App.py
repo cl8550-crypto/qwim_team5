@@ -761,13 +761,13 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
         reactives_shiny=reactives_shiny,
     )  # Centralized reactive state for coordination
 
-    # Initialize Goal Parity module server
-    tab_goal_parity_server(
-        id="ID_tab_goal_parity",
-        data_utils=data_utils,
-        data_inputs=data_inputs,
+    # Initialize Goal Parity module server (individual model tab)
+    tab_goal_parity_server(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
+        id="ID_tab_goal_parity",  # pyrefly: ignore[unexpected-keyword,bad-argument-count]  # Unique module identifier following naming convention
+        data_utils=data_utils,  # Utility functions and configuration settings
+        data_inputs=data_inputs,  # Input datasets (model loads cleaned_data itself)
         reactives_shiny=reactives_shiny,
-    )
+    )  # Reads Clients-tab inputs for investor profiling
 
     tab_goals_server(
         id="ID_tab_goals",
@@ -777,7 +777,12 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
     )
 
     tab_covariance_server(
-        id="ID_tab_covariance",)
+        id="ID_tab_covariance",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
+
 
 def app_factory() -> App:
     """Create a fresh Shiny application instance from the module UI and server."""

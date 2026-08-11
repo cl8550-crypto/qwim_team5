@@ -24,6 +24,12 @@ from src.dashboard.reporting._report_data_export_goal_parity import (  # noqa: E
 )
 
 
+from src.dashboard.reporting._report_data_export_goal_parity import (  # noqa: E402
+    export_inputs_goal_parity_impl_QWIM,
+    export_outputs_goal_parity_impl_QWIM,
+)
+
+
 def export_report_metadata_impl_QWIM(
     *, reactives_shiny: dict | None = None) -> Path:
     """Export report metadata (date, version) to ``report_metadata.json``.
