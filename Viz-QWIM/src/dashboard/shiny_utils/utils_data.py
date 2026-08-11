@@ -370,7 +370,12 @@ def get_goal_based_investing_results(*, project_dir: Any) -> dict[str, Any]:
     """Load precomputed MSGP goal plans from inputs/processed/goal_based_investing/."""
     import pickle
 
-    results_dir = project_dir / "inputs" / "processed" / "goal_based_investing"
+    results_dir = (
+        project_dir
+        / "inputs"
+        / "processed"
+        / "personalized_goal_based_investing"
+    )
     output: dict[str, Any] = {
         "personalized_goal_based_investing_Results": {},
         "personalized_goal_based_investing_Benchmarks": {},

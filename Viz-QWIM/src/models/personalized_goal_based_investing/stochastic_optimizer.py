@@ -1,21 +1,10 @@
 """Multi-stage stochastic goal programming (MSGP) optimizer.
 
-Implements Kim et al. (2019) Section 2.2-2.4 on the node-indexed
-:class:`~scenario_tree.ScenarioTree` (see that module's docstring for why
-node-indexing replaces the paper's explicit scenario+non-anticipativity
-formulation). Goal programming (Section 2.2, Figure 1) is implemented as a
+Goal programming (Section 2.2, Figure 1) is implemented as a
 loop over priority levels: level ``p`` solves a linear program keeping every
 previous level's consumption as a hard lower bound, so strictly higher
 priority goals can never be traded off against lower ones.
 
-Discounting note
------------------
-The paper's ``d_{t,s}`` discount factor is written scenario-dependent, but
-in almost all practical instantiations (including the paper's own case
-study) it is taken as a deterministic function of elapsed time via a fixed
-discount rate. We follow that convention here (``d_t = (1+discount_rate)^-years_t``)
-rather than introduce a stochastic discount process, which the paper itself
-does not specify how to estimate.
 """
 
 from __future__ import annotations
@@ -89,14 +78,18 @@ class MSGPStepResult:
     consumption: dict[int, float]  # node_id -> c^p_{t,s} (0.0 for stage 0)
     solver_status: str
 
+@dataclass
+class EfficientFrontierContext:
+    expected_returns: np.ndarray
+    covariance: np.ndarray
+    assets: list[str]
 
 @dataclass
 class MSGPResult:
-    """Full sequential-goal-programming solution across all priority levels."""
-
     tree: ScenarioTree
     goal_set: GoalSet
     steps: dict[int, MSGPStepResult]
+    efficient_frontier_context: EfficientFrontierContext | None = None
 
     @property
     def final(self) -> MSGPStepResult:

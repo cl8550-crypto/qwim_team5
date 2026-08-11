@@ -27,6 +27,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from pandas_contract import result
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -46,6 +47,10 @@ from src.models.personalized_goal_based_investing import (
     estimate_expected_returns,
     ewma_shrinkage_covariance,
     generate_bootstrap_stage_paths_with_inflation,
+)
+
+from src.models.personalized_goal_based_investing.stochastic_optimizer import (
+    EfficientFrontierContext,
 )
 
 OUTPUT_DIR = PROJECT_ROOT / "inputs" / "processed" / "personalized_goal_based_investing"
@@ -241,7 +246,20 @@ def solve_one_client(goal_set: GoalSet, returns: pd.DataFrame, inflation: pd.Ser
         stage_years=STAGE_YEARS, discount_rate=0.03, max_weight=0.45,
         turnover_limit=1.8, txn_cost_buy=0.001, txn_cost_sell=0.001,
     )
-    return MSGPOptimizer(tree, goal_set, cfg).solve()
+    result = MSGPOptimizer(tree, goal_set, cfg).solve()
+
+    result.efficient_frontier_context = EfficientFrontierContext(
+        expected_returns=mu_ann,
+        covariance=cov_ann,
+        assets=list(returns.columns),
+    )
+
+    return result
+    # Store the inputs used to construct the efficient frontier.
+    result.stage0_expected_returns = mu_ann
+    result.stage0_covariance = cov_ann
+
+    return result
 
 
 def main() -> None:
@@ -252,6 +270,7 @@ def main() -> None:
     for client_id, goal_set in CLIENTS.items():
         print(f"Solving {client_id} ...")
         result = solve_one_client(goal_set, returns, inflation)
+
         out_path = OUTPUT_DIR / f"{client_id}.pkl"
         with out_path.open("wb") as f:
             pickle.dump(result, f)
