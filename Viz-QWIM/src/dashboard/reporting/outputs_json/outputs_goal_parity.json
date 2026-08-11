@@ -1,0 +1,63 @@
+{
+  "mode": "balanced",
+  "solver_success": true,
+  "expected_return": 0.05527273302718056,
+  "goal_powers": {
+    "Liquidity": 0.2845116645755965,
+    "Income": 0.09263789950998093,
+    "Preservation": 0.3199919156974306,
+    "Growth": 0.302858520216992
+  },
+  "scarce_goals": [
+    "Income"
+  ],
+  "top_weights": [
+    {
+      "ticker": "XLP",
+      "name": "Consumer Staples",
+      "weight": 0.3499999999999986
+    },
+    {
+      "ticker": "TIP",
+      "name": "TIPS",
+      "weight": 0.34999999999999826
+    },
+    {
+      "ticker": "XLV",
+      "name": "Health Care",
+      "weight": 0.11271802601066301
+    },
+    {
+      "ticker": "AGG",
+      "name": "US Aggregate Bonds",
+      "weight": 0.09308707907021598
+    },
+    {
+      "ticker": "SHV",
+      "name": "Risk Free Rate Short Term",
+      "weight": 0.06026010916415745
+    },
+    {
+      "ticker": "BIL",
+      "name": "Risk Free Rate 1 3M TBill",
+      "weight": 0.033934785754961776
+    }
+  ],
+  "rebalancing": {
+    "traded": true,
+    "num_trades": 8,
+    "turnover": 0.08,
+    "goal_powers_before": {
+      "Liquidity": 0.26014270686557456,
+      "Income": 0.0949289203793074,
+      "Preservation": 0.31396332691203127,
+      "Growth": 0.33096504584308656
+    },
+    "goal_powers_after": {
+      "Liquidity": 0.28357245027592776,
+      "Income": 0.09368859868113844,
+      "Preservation": 0.3193552699613903,
+      "Growth": 0.3033836810815434
+    }
+  }
+}

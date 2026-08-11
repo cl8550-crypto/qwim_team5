@@ -14,6 +14,15 @@ def _get_public_report_data_export_module_QWIM() -> Any:
 
     return report_data_export
 
+from src.dashboard.reporting._report_data_export_covariance import (
+    export_inputs_covariance_impl_QWIM,
+    export_outputs_covariance_impl_QWIM,
+)
+from src.dashboard.reporting._report_data_export_goal_parity import (  # noqa: E402
+    export_inputs_goal_parity_impl_QWIM,
+    export_outputs_goal_parity_impl_QWIM,
+)
+
 
 from src.dashboard.reporting._report_data_export_goal_parity import (  # noqa: E402
     export_inputs_goal_parity_impl_QWIM,
@@ -624,6 +633,8 @@ def export_all_report_data_impl_QWIM(
     )
     paths["inputs_simulation"] = public_module.export_inputs_simulation(reactives_shiny = reactives_shiny)
     paths["outputs_simulation"] = public_module.export_outputs_simulation(reactives_shiny = reactives_shiny)
+    paths["inputs_covariance"] = public_module.export_inputs_covariance(reactives_shiny=reactives_shiny)
+    paths["outputs_covariance"] = public_module.export_outputs_covariance(reactives_shiny=reactives_shiny,)
     paths["data_clients"] = public_module.export_data_clients_json(reactives_shiny = reactives_shiny)
     paths["data_results"] = public_module.export_data_results_json(reactives_shiny = reactives_shiny)
     paths["report_config"] = public_module.export_report_config(
@@ -636,6 +647,8 @@ def export_all_report_data_impl_QWIM(
             "include_skfolio_optimization": False,
             "include_optimalportfolios_optimization": False,
             "include_simulation": True,
+            "include_goal_parity": True,
+            "include_covariance": True,
         },
     )
 
@@ -695,6 +708,8 @@ def export_data_results_json_impl_QWIM(
         "Portfolio_Simulation_Outputs": public_module.export_outputs_simulation,
         "Goal_Parity_Inputs": public_module.export_inputs_goal_parity,
         "Goal_Parity_Outputs": public_module.export_outputs_goal_parity,
+        "Covariance_Inputs": public_module.export_inputs_covariance,
+        "Covariance_Outputs": public_module.export_outputs_covariance,
     }
 
     data: dict[str, Any] = {}

@@ -1,0 +1,14 @@
+{
+  "report_date": "July 29, 2026",
+  "report_date_iso": "2026-07-29",
+  "report_title": "QWIM Report",
+  "include_partner": false,
+  "include_advisor_info": true,
+  "include_portfolio_analysis": true,
+  "include_portfolio_comparison": true,
+  "include_weights_analysis": true,
+  "include_skfolio_optimization": false,
+  "include_optimalportfolios_optimization": false,
+  "include_simulation": true,
+  "include_goal_parity": true
+}

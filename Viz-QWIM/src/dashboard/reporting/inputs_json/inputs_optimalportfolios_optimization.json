@@ -1,0 +1,13 @@
+{
+  "time_period": "3y",
+  "benchmark_key": "Benchmark_Portfolio",
+  "method1": {
+    "type": "MIN_VARIANCE",
+    "is_long_only": true
+  },
+  "method2": {
+    "type": "MAX_SHARPE",
+    "risk_free_rate": 0.0,
+    "is_long_only": true
+  }
+}

@@ -50,6 +50,8 @@ from src.dashboard.reporting._report_data_export_exports import (
     export_outputs_optimalportfolios_optimization_impl_QWIM,
     export_outputs_portfolio_analysis_impl_QWIM,
     export_outputs_portfolio_comparison_impl_QWIM,
+    export_inputs_covariance_impl_QWIM,
+    export_outputs_covariance_impl_QWIM,
     export_outputs_simulation_impl_QWIM,
     export_outputs_skfolio_optimization_impl_QWIM,
     export_outputs_weights_analysis_impl_QWIM,
@@ -808,7 +810,27 @@ def export_outputs_goal_parity(
     """Export Goal Parity strategic/rebalancing outputs to JSON."""
     return export_outputs_goal_parity_impl_QWIM(reactives_shiny = reactives_shiny)
 
+# =========================================================================
+# 8.  COVARIANCE ESTIMATION — inputs & outputs
+# =========================================================================
 
+
+def export_inputs_covariance(
+    *, reactives_shiny: dict | None,
+) -> Path:
+    """Export covariance-analysis settings to JSON."""
+    return export_inputs_covariance_impl_QWIM(
+        reactives_shiny=reactives_shiny,
+    )
+
+
+def export_outputs_covariance(
+    *, reactives_shiny: dict | None,
+) -> Path:
+    """Export covariance-analysis results to JSON."""
+    return export_outputs_covariance_impl_QWIM(
+        reactives_shiny=reactives_shiny,
+    )
 # =========================================================================
 # AGGREGATE EXPORT
 # =========================================================================

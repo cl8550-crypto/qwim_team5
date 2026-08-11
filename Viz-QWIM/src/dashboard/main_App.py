@@ -223,6 +223,10 @@ from src.dashboard.shiny_tab_clients.tab_clients import (
     tab_clients_server,
     tab_clients_ui,
 )
+from src.dashboard.shiny_tab_goal_based_investing.tab_goal_based_investing import (
+    tab_goal_based_investing_server,
+    tab_goal_based_investing_ui,
+)
 from src.dashboard.shiny_tab_goal_parity.tab_goal_parity import (
     tab_goal_parity_server,
     tab_goal_parity_ui,
@@ -243,9 +247,17 @@ from src.dashboard.shiny_tab_results.tab_results import (
     tab_results_server,
     tab_results_ui,
 )
+from src.dashboard.shiny_tab_covariance.tab_covariance import (
+    tab_covariance_server,
+    tab_covariance_ui,
+)
 from src.dashboard.shiny_tab_setup.tab_setup import (
     tab_setup_server,
     tab_setup_ui,
+)
+from src.dashboard.shiny_tab_goals.tab_goals import (
+    tab_goals_server,
+    tab_goals_ui,
 )
 
 
@@ -484,6 +496,14 @@ def create_app_ui() -> Any:
                 data_inputs=data_inputs,
             ),  # Input datasets for clients
         ),
+        ui.nav_panel(
+            "Goal-Based Investing",
+            tab_goal_based_investing_ui(
+                "ID_tab_goal_based_investing",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
         # portfolio analysis tab
         ui.nav_panel(
             "Portfolios",
@@ -492,6 +512,15 @@ def create_app_ui() -> Any:
                 data_utils=data_utils,  # Utility functions and configuration
                 data_inputs=data_inputs,
             ),  # Input datasets for analysis
+        ),
+        # 2. In create_app_ui(), after the Portfolios nav_panel:
+        ui.nav_panel(
+            " Personalized Goals Investing",
+            tab_goals_ui(
+                "ID_tab_goals",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
         ),
         # Products tab (annuities, insurance, etc.)
         ui.nav_panel(
@@ -522,6 +551,14 @@ def create_app_ui() -> Any:
         ),
         # Navigation spacer to push subsequent elements to the right
         # Creates proper visual separation between main content and utility buttons
+        ui.nav_panel(
+            "Covariance",
+            tab_covariance_ui(
+                "ID_tab_covariance",
+                data_utils=data_utils,
+                data_inputs=data_inputs,
+            ),
+        ),
         ui.nav_spacer(),
         # About button in navigation bar for application information
         # Provides users with help, features overview, and version details
@@ -693,6 +730,13 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
         reactives_shiny=reactives_shiny,
     )  # Centralized reactive state for coordination
 
+    tab_goal_based_investing_server(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
+        id="ID_tab_goal_based_investing",  # pyrefly: ignore[unexpected-keyword,bad-argument-count]
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
+
     # Initialize portfolio analysis module server
     tab_portfolios_server(  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
         id="ID_tab_portfolios",  # pyrefly: ignore[unexpected-keyword,bad-argument-count]  # Unique module identifier following naming convention
@@ -724,6 +768,20 @@ def app_server(input: Any, output: Any, session: Any) -> None:  # noqa: A002, AR
         data_inputs=data_inputs,  # Input datasets (model loads cleaned_data itself)
         reactives_shiny=reactives_shiny,
     )  # Reads Clients-tab inputs for investor profiling
+
+    tab_goals_server(
+        id="ID_tab_goals",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
+
+    tab_covariance_server(
+        id="ID_tab_covariance",
+        data_utils=data_utils,
+        data_inputs=data_inputs,
+        reactives_shiny=reactives_shiny,
+    )
 
 
 def app_factory() -> App:

@@ -1,0 +1,100 @@
+{
+  "weight_statistics": [
+    {
+      "component": "IVV",
+      "current_weight": 0.10167248210638957,
+      "mean_weight": 0.08580126712067525,
+      "min_weight": 0.0,
+      "max_weight": 0.17954012947923748,
+      "std_weight": 0.05290331419085263
+    },
+    {
+      "component": "IJH",
+      "current_weight": 0.06334754512320546,
+      "mean_weight": 0.08448347628778292,
+      "min_weight": 0.0,
+      "max_weight": 0.18620137812891702,
+      "std_weight": 0.045859514809294316
+    },
+    {
+      "component": "IWM",
+      "current_weight": 0.1555085951969275,
+      "mean_weight": 0.09356353630410524,
+      "min_weight": 0.0,
+      "max_weight": 0.22936698180539994,
+      "std_weight": 0.060738280279039616
+    },
+    {
+      "component": "EFA",
+      "current_weight": 0.08498820961597857,
+      "mean_weight": 0.08733969481411379,
+      "min_weight": 0.0,
+      "max_weight": 0.16191796196220562,
+      "std_weight": 0.04794301837452966
+    },
+    {
+      "component": "EEM",
+      "current_weight": 0.14886561159261918,
+      "mean_weight": 0.0780396929578585,
+      "min_weight": 0.0,
+      "max_weight": 0.16048858012395298,
+      "std_weight": 0.055964305040207905
+    },
+    {
+      "component": "AGG",
+      "current_weight": 0.0,
+      "mean_weight": 0.07673905174792141,
+      "min_weight": 0.0,
+      "max_weight": 0.1707937509979732,
+      "std_weight": 0.05335777666460333
+    },
+    {
+      "component": "SPTL",
+      "current_weight": 0.15380490639428127,
+      "mean_weight": 0.09059284202284984,
+      "min_weight": 0.0,
+      "max_weight": 0.19441986228760538,
+      "std_weight": 0.05827702656824978
+    },
+    {
+      "component": "HYG",
+      "current_weight": 0.028302338167847562,
+      "mean_weight": 0.07855856842689776,
+      "min_weight": 0.0,
+      "max_weight": 0.18444800348203866,
+      "std_weight": 0.0539394327041994
+    },
+    {
+      "component": "SPBO",
+      "current_weight": 0.15255812770051785,
+      "mean_weight": 0.09099039064355617,
+      "min_weight": 0.0,
+      "max_weight": 0.18212531735279824,
+      "std_weight": 0.05240852620311294
+    },
+    {
+      "component": "IYR",
+      "current_weight": 0.0420754362424245,
+      "mean_weight": 0.08662031474702996,
+      "min_weight": 0.0,
+      "max_weight": 0.16491231931307307,
+      "std_weight": 0.0505163579859278
+    },
+    {
+      "component": "DBC",
+      "current_weight": 0.0,
+      "mean_weight": 0.06687412405294371,
+      "min_weight": 0.0,
+      "max_weight": 0.17711140658507293,
+      "std_weight": 0.04958639330899941
+    },
+    {
+      "component": "GLD",
+      "current_weight": 0.06887674785980857,
+      "mean_weight": 0.08039704087426545,
+      "min_weight": 0.0,
+      "max_weight": 0.17753920959825642,
+      "std_weight": 0.05193123923968019
+    }
+  ]
+}

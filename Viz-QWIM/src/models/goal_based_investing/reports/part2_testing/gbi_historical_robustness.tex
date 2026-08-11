@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Test 1: Moderate-policy historical walk-forward performance and robustness.}
+\label{tab:gbi-historical-robustness}
+\begin{tabular}{lrrrrrr}
+\toprule
+Strategy & Ann. return & Ann. vol. & Sharpe & Max drawdown & ES (95\%) & Months \\
+\midrule
+36m rolling baseline & 9.11% & 7.38% & 1.22 & -6.85% & 3.61% & 59 \\
+36m frozen policy & 9.20% & 9.23% & 1.00 & -14.85% & 5.30% & 59 \\
+36m 50/50 benchmark & 9.45% & 9.36% & 1.02 & -14.43% & 4.89% & 59 \\
+48m rolling sensitivity & 4.65% & 6.99% & 0.69 & -7.70% & 3.84% & 47 \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}
+\begin{minipage}{0.96\linewidth}
+\footnotesize
+Notes: The 36-month rolling policy is the baseline. The first three rows use the same 59 out-of-sample months, quarterly rebalancing and 10bp one-way transaction costs. The 48-month row is a window-length sensitivity with 47 out-of-sample months. Sharpe assumes a zero risk-free rate.
+\end{minipage}
+\end{table}
